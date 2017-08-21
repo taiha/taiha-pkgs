@@ -42,8 +42,8 @@ endef
 
 define Build/Compile
 	tar xvf $(BUILD_DIR)/../../dl/$(PKG_NAME)-$(PKG_VERSION).tar.xz -C $(BUILD_DIR)
-	$(TARGET_CC) $(TARGET_CFLAGS) \
-			$(TARGET_CPPFLAGS) $(TARGET_LDFLAGS) \
+	$(TARGET_CC) \
+			$(TARGET_LDFLAGS) \
 			-o $(PKG_BUILD_DIR)/sl $(PKG_BUILD_DIR)/sl.c -lncurses
 endef
 
