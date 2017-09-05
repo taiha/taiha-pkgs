@@ -47,7 +47,7 @@ define Build/Compile
 	make generate
 	$(CP) $GOPATH/src/github.com/shirou/gopsutil/host_linux_arm.go \
 		$GOPATH/src/github.com/shirou/gopsutil/host/host_linux_mips.go
-	GOOS=linux GOARCH=mips GOMIPS=softfloat $(MAKE) build $(LDFLAGS)
+	GOOS=linux GOARCH=mips GOMIPS=softfloat make build $(LDFLAGS)
 endef
 
 define Package/sl/install
