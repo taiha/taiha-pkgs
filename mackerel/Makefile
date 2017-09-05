@@ -45,8 +45,8 @@ LDFLAGS:=-s -w
 define Build/Compile
 	tar xvf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.xz -C $(BUILD_DIR)
 	make generate
-	$(CP) $GOPATH/src/github.com/shirou/gopsutil/host_linux_arm.go \
-		$GOPATH/src/github.com/shirou/gopsutil/host/host_linux_mips.go
+	$(CP) $GOSRC/github.com/shirou/gopsutil/host_linux_arm.go \
+		$GOSRC/github.com/shirou/gopsutil/host/host_linux_mips.go
 	GOOS=linux GOARCH=mips GOMIPS=softfloat make build $(LDFLAGS)
 endef
 
