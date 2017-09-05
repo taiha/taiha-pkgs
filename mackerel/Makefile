@@ -12,8 +12,8 @@ PKG_VERSION:=0.44.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/mackerelio/mackerel-agent.git
-PKG_SOURCE_VERSION:=1e6fd19544f942a8e4cb2d29b665a2d4cc0f58fb
+PKG_SOURCE_URL:=https://github.com/taiha/mackerel-agent.git
+PKG_SOURCE_VERSION:=3c0cf2f3d2b37bd586f9eaea69435bea64184cc0
 PKG_MIRROR_HASH:=
 PKG_MAINTAINER:=musashino205
 
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mackerel-agent
   SECTION:=admin
   CATEGORY:=Administration
-  TITLE:=mackerel-agent
+  TITLE:=The server monitoring platform
   URL:=https://mackerel.io/
 endef
 
@@ -35,25 +35,28 @@ define Package/mackerel-agent/description
   congruency with autoscale, and other innovative features.
 endef
 
+define Package/mackerel-agent/conffiles
+/etc/config/$(PKG_NAME).conf
+endef
+
 define Build/Configure
-endef
-
-define Build/Prepare
-endef
-
-LDFLAGS:=-s -w
-define Build/Compile
 	tar xvf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.xz -C $(BUILD_DIR)
-	make generate
-	$(CP) $GOSRC/github.com/shirou/gopsutil/host_linux_arm.go \
-		$GOSRC/github.com/shirou/gopsutil/host/host_linux_mips.go
-	GOOS=linux GOARCH=mips GOMIPS=softfloat make build $(LDFLAGS)
+	make -C $(PKG_BUILD_DIR) generate
 endef
 
-define Package/sl/install
+define Build/Compile
+	GOOS=linux GOARCH=mips GOMIPS=softfloat make -C $(PKG_BUILD_DIR) build
+endef
+
+define Package/mackerel-agent/install
+	# Install binary file
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sl $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/mackerel-agent.sample.conf $(1)/etc/config/mackerel-agent.conf
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/mackerel-agent $(1)/usr/bin/
+
+	# Install conf file
+	$(INSTALL_DIR) $(1)/etc/config
+	$(CP) $(PKG_BUILD_DIR)/mackerel-agent.sample.conf $(PKG_BUILD_DIR)/mackerel-agent.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mackerel-agent.conf $(1)/etc/config/
 endef
 
 $(eval $(call BuildPackage,mackerel-agent))
