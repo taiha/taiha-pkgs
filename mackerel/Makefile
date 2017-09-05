@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=mackerel
+PKG_NAME:=mackerel-agent
 PKG_VERSION:=0.44.1
 PKG_RELEASE:=1
 
@@ -22,17 +22,17 @@ PKG_LICENSE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/mackerel
+define Package/mackerel-agent
   SECTION:=admin
   CATEGORY:=Administration
-  TITLE:=mackerel
+  TITLE:=mackerel-agent
   URL:=https://mackerel.io/
 endef
 
-define Package/mackerel/description
+define Package/mackerel-agent/description
   "The server monitoring platform we always wanted."
-  Precisely tuned graphs, role-based architecture, \
-  fully customizable notifications, congruency with autoscale, and other innovative features.
+  Precisely tuned graphs, role-based architecture, fully customizable notifications,
+  congruency with autoscale, and other innovative features.
 endef
 
 define Build/Configure
@@ -56,4 +56,4 @@ define Package/sl/install
 	$(CP) $(PKG_BUILD_DIR)/mackerel-agent.sample.conf $(1)/etc/config/mackerel-agent.conf
 endef
 
-$(eval $(call BuildPackage,mackerel))
+$(eval $(call BuildPackage,mackerel-agent))
