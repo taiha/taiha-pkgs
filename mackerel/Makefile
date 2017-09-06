@@ -44,7 +44,7 @@ PKG_GOARCH:=none
 GO_SF:=
 ifdef CONFIG_TARGET_ar71xx
 	PKG_GOARCH:=mips
-	GO_SF:="GOMIPS=softfloat"
+	GO_SF:=GOMIPS=softfloat
 endif
 ifdef CONFIG_TARGET_bcm53xx
 	PKG_GOARCH:=arm
@@ -54,11 +54,11 @@ ifdef CONFIG_TARGET_brcm2708
 endif
 ifdef CONFIG_TARGET_brcm47xx
 	PKG_GOARCH:=mipsle
-	GO_SF:="GOMIPS=softfloat"
+	GO_SF:=GOMIPS=softfloat
 endif
 ifdef CONFIG_TARGET_brcm63xx
 	PKG_GOARCH:=mips
-	GO_SF:="GOMIPS=softfloat"
+	GO_SF:=GOMIPS=softfloat
 endif
 ifdef CONFIG_TARGET_kirkwood
 	PKG_GOARCH:=arm
@@ -66,14 +66,14 @@ endif
 ifdef CONFIG_TARGET_lantiq
 # big/little endian mixed
 	PKG_GOARCH:=mipsle
-	GO_SF:="GOMIPS=softfloat"
+	GO_SF:=GOMIPS=softfloat
 endif
 ifdef CONFIG_TARGET_mvebu
 	PKG_GOARCH:=arm
 endif
 ifdef CONFIG_TARGET_ramips
 	PKG_GOARCH:=mipsle
-	GO_SF:="GOMIPS=softfloat"
+	GO_SF:=GOMIPS=softfloat
 endif
 ifdef CONFIG_TARGET_sunxi
 	PKG_GOARCH:=arm
