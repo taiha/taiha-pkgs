@@ -34,22 +34,25 @@ define Package/mackerel-agent/description
   congruency with autoscale, and other innovative features.
 endef
 
-# mackerel-agent configuration file
+# mackerel-agent configuration files
 define Package/mackerel-agent/conffiles
 /etc/config/$(PKG_NAME).conf
+/etc/mackerel-agent/id
 endef
 
 # golang cross-compile architecture (GOARCH)
 PKG_GOARCH:=none
+# golang soft-float (GOARM/GOMIPS)
 GO_SF:=
-ifdef CONFIG_TARGET_ar71xx
+# set GOARCH and GOARM/GOMIPS by targets
+ifdef CONFIG_TARGET_ar71xx		# Qualcomm Atheros MIPS
 	PKG_GOARCH:=mips
 	GO_SF:=GOMIPS=softfloat
 endif
-ifdef CONFIG_TARGET_bcm53xx
+ifdef CONFIG_TARGET_bcm53xx		# Broadcom ARM
 	PKG_GOARCH:=arm
 endif
-ifdef CONFIG_TARGET_brcm2708
+ifdef CONFIG_TARGET_brcm2708	# Broadcom ARM (RPi)
 	PKG_GOARCH:=arm
 endif
 ifdef CONFIG_TARGET_brcm47xx
@@ -71,7 +74,7 @@ endif
 ifdef CONFIG_TARGET_mvebu
 	PKG_GOARCH:=arm
 endif
-ifdef CONFIG_TARGET_ramips
+ifdef CONFIG_TARGET_ramips		# Ralink/MediaTek MIPS
 	PKG_GOARCH:=mipsle
 	GO_SF:=GOMIPS=softfloat
 endif
@@ -95,8 +98,11 @@ define Package/mackerel-agent/install
 
 	# Install conf file
 	$(INSTALL_DIR) $(1)/etc/config
-	$(CP) $(PKG_BUILD_DIR)/mackerel-agent.sample.conf $(PKG_BUILD_DIR)/mackerel-agent.conf
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mackerel-agent.conf $(1)/etc/config/
+	$(INSTALL_CONF) ./files/mackerel-agent.conf $(1)/etc/config/
+
+	# Install id file
+	$(INSTALL_DIR) $(1)/etc/mackerel-agent
+	$(INSTALL_CONF) ./files/id $(1)/etc/mackerel-agent/
 endef
 
 $(eval $(call BuildPackage,mackerel-agent))
