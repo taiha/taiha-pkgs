@@ -30,7 +30,7 @@ stop()
 		PROC_ID=$(pgrep -o ${PROG})
 		kill -SIGQUIT ${PROC_ID}
 		wait ${PROC_ID}
-		if [ -f $PIDFILE ]
+		if [ -f $PIDFILE ]; then
 			rm -f $PIDFILE
 		fi
 	fi
