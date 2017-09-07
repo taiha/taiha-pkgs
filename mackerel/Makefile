@@ -52,7 +52,7 @@ endif
 ifdef CONFIG_TARGET_bcm53xx		# Broadcom ARM
 	PKG_GOARCH:=arm
 endif
-ifdef CONFIG_TARGET_brcm2708	# Broadcom ARM (RPi)
+ifdef CONFIG_TARGET_brcm2708		# Broadcom ARM (RPi)
 	PKG_GOARCH:=arm
 endif
 ifdef CONFIG_TARGET_brcm47xx
@@ -103,6 +103,10 @@ define Package/mackerel-agent/install
 	# Install id file
 	$(INSTALL_DIR) $(1)/etc/mackerel-agent
 	$(INSTALL_CONF) ./files/id $(1)/etc/mackerel-agent/
+
+	# Install init script
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/mackerel.init $(1)/etc/init.d/mackerel
 endef
 
 $(eval $(call BuildPackage,mackerel-agent))
