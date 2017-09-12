@@ -9,7 +9,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 PROG="/usr/bin/mackerel-agent"
 CONFFILE="/etc/config/mackerel-agent.conf"
 PIDFILE=/var/run/mackerel-agent.pid
-OPTIONS="-conf=${CONFFILE} -verbose=false -pidfile=${PIDFILE}"
+OPTIONS="-conf=${CONFFILE} -pidfile=${PIDFILE}"
 ROOTDIR="/etc/mackerel-agent"
 
 start()
