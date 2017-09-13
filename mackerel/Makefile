@@ -41,7 +41,7 @@ define Package/mackerel-agent/conffiles
 endef
 
 # golang cross-compile architecture (GOARCH)
-PKG_GOARCH:=none
+PKG_GOARCH:=
 # golang soft-float (GOARM/GOMIPS)
 GO_SF:=
 # set GOARCH and GOARM/GOMIPS by targets
@@ -51,11 +51,12 @@ ifdef CONFIG_TARGET_ar71xx		# Qualcomm Atheros MIPS
 endif
 ifdef CONFIG_TARGET_bcm53xx		# Broadcom ARM
 	PKG_GOARCH:=arm
+	GO_SF:=GOARM=5
 endif
 ifdef CONFIG_TARGET_brcm2708		# Broadcom ARM (RPi)
 	PKG_GOARCH:=arm
 endif
-ifdef CONFIG_TARGET_brcm47xx
+ifdef CONFIG_TARGET_brcm47xx		# Broadcom MIPS
 	PKG_GOARCH:=mipsle
 	GO_SF:=GOMIPS=softfloat
 endif
@@ -99,10 +100,6 @@ define Package/mackerel-agent/install
 	# Install conf file
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/mackerel-agent.conf $(1)/etc/config/
-
-	# Install id file
-#	$(INSTALL_DIR) $(1)/etc/mackerel-agent
-#	$(INSTALL_CONF) ./files/id $(1)/etc/mackerel-agent/
 
 	# Install init script
 	$(INSTALL_DIR) $(1)/etc/init.d
