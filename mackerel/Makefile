@@ -42,45 +42,30 @@ endef
 
 # golang cross-compile architecture (GOARCH)
 PKG_GOARCH:=
-# golang soft-float (GOARM/GOMIPS)
+# golang soft-float support (GOARM/GOMIPS)
 GO_SF:=
-# set GOARCH and GOARM/GOMIPS by targets
-ifdef CONFIG_TARGET_ar71xx		# Qualcomm Atheros MIPS
+# set GOARCH and GOARM/GOMIPS by $(ARCH)
+ifeq ($(ARCH),mips)		# for MIPS big-endianess SoC
 	PKG_GOARCH:=mips
 	GO_SF:=GOMIPS=softfloat
 endif
-ifdef CONFIG_TARGET_bcm53xx		# Broadcom ARM
+ifeq ($(ARCH),mipsel)		# for MIPS little-endianess SoC
+	PKG_GOARCH:=mipsle
+	GO_SF:=GOMIPS=softfloat
+endif
+ifeq ($(ARCH),mips64)		# for MIPS64 big-endianess SoC
+	PKG_GOARCH:=mips64
+	GO_SF:=GOMIPS=softfloat
+endif
+ifeq ($(ARCH),arm)		# for ARM SoC
 	PKG_GOARCH:=arm
 	GO_SF:=GOARM=5
 endif
-ifdef CONFIG_TARGET_brcm2708		# Broadcom ARM (RPi)
-	PKG_GOARCH:=arm
+ifeq ($(ARCH),i386)		# for x86 (i386) SoC/CPU
+	PKG_GOARCH:=386
 endif
-ifdef CONFIG_TARGET_brcm47xx		# Broadcom MIPS
-	PKG_GOARCH:=mipsle
-	GO_SF:=GOMIPS=softfloat
-endif
-ifdef CONFIG_TARGET_brcm63xx
-	PKG_GOARCH:=mips
-	GO_SF:=GOMIPS=softfloat
-endif
-ifdef CONFIG_TARGET_kirkwood
-	PKG_GOARCH:=arm
-endif
-ifdef CONFIG_TARGET_lantiq
-# big/little endian mixed
-	PKG_GOARCH:=mipsle
-	GO_SF:=GOMIPS=softfloat
-endif
-ifdef CONFIG_TARGET_mvebu
-	PKG_GOARCH:=arm
-endif
-ifdef CONFIG_TARGET_ramips		# Ralink/MediaTek MIPS
-	PKG_GOARCH:=mipsle
-	GO_SF:=GOMIPS=softfloat
-endif
-ifdef CONFIG_TARGET_sunxi
-	PKG_GOARCH:=arm
+ifeq ($(ARCH),x86_64)		# for x86_64 (amd64) SoC/CPU
+	PKG_GOARCH:=amd64
 endif
 
 define Build/Configure
