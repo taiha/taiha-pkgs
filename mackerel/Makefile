@@ -37,7 +37,7 @@ endef
 # mackerel-agent configuration files
 define Package/mackerel-agent/conffiles
 /etc/config/$(PKG_NAME).conf
-#/etc/mackerel-agent/id
+/etc/mackerel-agent/id
 endef
 
 # golang cross-compile architecture (GOARCH)
@@ -85,6 +85,10 @@ define Package/mackerel-agent/install
 	# Install conf file
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/mackerel-agent.conf $(1)/etc/config/
+
+	# Install id file
+	$(INSTALL_DIR) $(1)/etc/mackerel-agent
+	$(INSTALL_CONF) ./files/id $(1)/etc/mackerel-agent/
 
 	# Install init script
 	$(INSTALL_DIR) $(1)/etc/init.d
