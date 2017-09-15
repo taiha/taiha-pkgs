@@ -1,0 +1,62 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=50
+STOP=10
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+# Name
+NAME="mackerel-agent"
+
+# Root directory
+ROOTDIR="/etc/${NAME}"
+
+# Program (mackerel-agent)
+PROG="/usr/bin/${NAME}"
+
+# Files
+CONFFILE="/etc/config/${NAME}.conf"
+IDFILE="${ROOTDIR}/id"
+PIDFILE="/var/run/${NAME}.pid"
+
+# Command lines
+OPTIONS="-conf=${CONFFILE} -pidfile=${PIDFILE}"
+DEV_ID=$(cat ${IDFILE})
+
+start()
+{
+	if [ ! -d ${ROOTDIR} ]; then
+		mkdir ${ROOTDIR}
+	else
+		if [ -f ${IDFILE} ]; then
+			if [ -z "${DEV_ID}" ] || [ "${DEV_ID}" = "emptyid" ]; then
+				rm -f ${IDFILE}
+			fi
+		fi
+	fi
+	ulimit -n 65536 1>/dev/null 2>&1 || true
+	${PROG} start -conf=${CONFFILE} 2>&1 | logger -t mackerel-agent &
+	${PROG} ${OPTIONS} 2>&1 | logger -t mackerel-agent &
+	sleep 3
+	kill -0 $(cat ${PIDFILE} 2>/dev/null) >/dev/null 2>&1
+}
+
+stop()
+{
+	if [ -f $PIDFILE ]; then
+		${PROG} stop -conf=${CONFFILE} 2>&1 | logger -t mackerel-agent &
+		PROC_ID=$(pgrep -o ${PROG})
+		kill -SIGQUIT ${PROC_ID}
+		wait ${PROC_ID}
+		sleep 3
+		if [ -f $PIDFILE ]; then
+			rm -f $PIDFILE
+		fi
+	fi
+}
+
+restart()
+{
+	stop_service
+	start_service
+}
