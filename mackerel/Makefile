@@ -75,6 +75,7 @@ endef
 
 define Build/Compile
 	GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF) make CC=gcc -C $(PKG_BUILD_DIR) build
+	upx $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
 
 define Package/mackerel-agent/install
