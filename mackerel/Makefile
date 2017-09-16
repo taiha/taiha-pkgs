@@ -112,20 +112,20 @@ define BuildPlugin
   endef
 
   define Package/mackerel-plugin-$(1)/compile
-  	@if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then
-  		mkdir $(PKG_BUILD_DIR)/plugins
-  	fi
-  	go get github.com/mackerel-agent-plugins
-  	GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF) \
-  		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-  			$(GOPATH)/src/github.com/mackerelio/mackerel-agent-plugins/mackerel-plugin-$(1)/main.go
+	@if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then
+		mkdir $(PKG_BUILD_DIR)/plugins
+	fi
+	go get github.com/mackerel-agent-plugins
+	GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF) \
+		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
+			$(GOPATH)/src/github.com/mackerelio/mackerel-agent-plugins/mackerel-plugin-$(1)/main.go
   endef
 
   define Package/mackerel-plugin-$(1)/install
-  	$$(call Package/mackerel-plugin-$(1)/compile)
-  	$(INSTALL_DIR) $$(1)/usr/sbin
-  	$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-  		$$(1)/usr/sbin/
+	$$(call Package/mackerel-plugin-$(1)/compile)
+	$(INSTALL_DIR) $$(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
+		$$(1)/usr/sbin/
   endef
 
   $$(eval $$(call BuildPackage,mackerel-plugin-$(1)))
