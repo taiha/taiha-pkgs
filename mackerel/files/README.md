@@ -35,3 +35,9 @@ and update feeds.
 Select and check the following package:
 
 ```(root) -> Administration -> mackerel-agent```
+
+## Special thanks
+
+- Shell command in Makefile [Makefile#L115](../Makefile#L115)
+
+  - orumin (kotatsu_mi)
