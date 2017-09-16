@@ -112,7 +112,9 @@ define BuildPlugin
   endef
 
   define Package/mackerel-plugin-$(1)/compile
-	[ ! -d $(PKG_BUILD_DIR)/plugins ] && mkdir $(PKG_BUILD_DIR)/plugins
+	if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then \
+		mkdir $(PKG_BUILD_DIR)/plugins ; \
+	fi
 
 	go get github.com/mackerelio/mackerel-agent-plugins
 	$(GO_PARAMS) \
