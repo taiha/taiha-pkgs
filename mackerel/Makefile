@@ -2,7 +2,6 @@
 # Copyright (C) 2017 musashino205
 #
 # This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk
@@ -73,6 +72,7 @@ endif
 ifeq ($(ARCH),x86_64)		# for x86_64 (amd64) SoC/CPU
 	PKG_GOARCH:=amd64
 endif
+GO_PARAMS:=GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF)
 
 define Build/Configure
 	tar xvf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.xz -C $(BUILD_DIR)
@@ -80,7 +80,7 @@ define Build/Configure
 endef
 
 define Build/Compile
-	GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF) make CC=gcc -C $(PKG_BUILD_DIR) build
+	$(GO_PARAMS) make CC=gcc -C $(PKG_BUILD_DIR) build
 	upx $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
 
@@ -112,11 +112,10 @@ define BuildPlugin
   endef
 
   define Package/mackerel-plugin-$(1)/compile
-	@if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then
-		mkdir $(PKG_BUILD_DIR)/plugins
-	fi
-	go get github.com/mackerel-agent-plugins
-	GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF) \
+	[ ! -d $(PKG_BUILD_DIR)/plugins ] && mkdir $(PKG_BUILD_DIR)/plugins
+
+	go get github.com/mackerelio/mackerel-agent-plugins
+	$(GO_PARAMS) \
 		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
 			$(GOPATH)/src/github.com/mackerelio/mackerel-agent-plugins/mackerel-plugin-$(1)/main.go
   endef
