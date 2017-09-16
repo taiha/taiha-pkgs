@@ -20,12 +20,18 @@ PKG_LICENSE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/mackerel-agent
+define Package/mackerel-agent/Default
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=The server monitoring platform
   URL:=https://mackerel.io/
   MAINTAINER:=musashino205
+endef
+
+define Package/mackerel-agent
+  $(call Package/mackerel-agent/Default)
+  TITLE:=The server monitoring platform
+  MENU:=1
 endef
 
 define Package/mackerel-agent/description
@@ -81,19 +87,56 @@ endef
 define Package/mackerel-agent/install
 	# Install binary file
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/mackerel-agent $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/$(PKG_NAME) $(1)/usr/bin/
 
 	# Install conf file
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/mackerel-agent.conf $(1)/etc/config/
+	$(INSTALL_CONF) ./files/$(PKG_NAME).conf $(1)/etc/config/
 
 	# Install id file
-	$(INSTALL_DIR) $(1)/etc/mackerel-agent
-	$(INSTALL_CONF) ./files/id $(1)/etc/mackerel-agent/
+	$(INSTALL_DIR) $(1)/etc/$(PKG_NAME)
+	$(INSTALL_CONF) ./files/id $(1)/etc/$(PKG_NAME)/
 
 	# Install init script
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mackerel.init $(1)/etc/init.d/mackerel
 endef
 
+# Build/Install plugins
+define BuildPlugin
+
+  define Package/mackerel-plugin-$(1)
+  $$(call Package/mackerel-agent/Default)
+    TITLE:=$(2) plugin
+    DEPENDS:= mackerel-agent $(3)
+  endef
+
+  define Package/mackerel-plugin-$(1)/compile
+  	@if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then
+  		mkdir $(PKG_BUILD_DIR)/plugins
+  	fi
+  	go get github.com/mackerel-agent-plugins
+  	GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF) \
+  		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
+  			$(GOPATH)/src/github.com/mackerelio/mackerel-agent-plugins/mackerel-plugin-$(1)/main.go
+  endef
+
+  define Package/mackerel-plugin-$(1)/install
+  	$$(call Package/mackerel-plugin-$(1)/compile)
+  	$(INSTALL_DIR) $$(1)/usr/sbin
+  	$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
+  		$$(1)/usr/sbin/
+  endef
+
+  $$(eval $$(call BuildPackage,mackerel-plugin-$(1)))
+endef
+
+# Main package
 $(eval $(call BuildPackage,mackerel-agent))
+
+# Plugin packages
+#$(eval $(call BuildPlugin,NAME,DESCRIPTION,DEPENDENCIES))
+$(eval $(call BuildPlugin,conntrack,nf_conntrack custom metrics,))
+$(eval $(call BuildPlugin,linux,Get linux process metrics,))
+$(eval $(call BuildPlugin,multicore,Get multicore CPU metrics,))
+$(eval $(call BuildPlugin,uptime,uptime custom metrics,))
