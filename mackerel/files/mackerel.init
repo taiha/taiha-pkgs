@@ -35,7 +35,6 @@ start()
 		fi
 	fi
 	ulimit -n 65536 1>/dev/null 2>&1 || true
-	${PROG} start -conf=${CONFFILE} 2>&1 | logger -t mackerel-agent &
 	${PROG} ${OPTIONS} 2>&1 | logger -t mackerel-agent &
 	sleep 3
 	kill -0 $(cat ${PIDFILE} 2>/dev/null) >/dev/null 2>&1
@@ -44,7 +43,6 @@ start()
 stop()
 {
 	if [ -f $PIDFILE ]; then
-		${PROG} stop -conf=${CONFFILE} 2>&1 | logger -t mackerel-agent &
 		PROC_ID=$(pgrep -o ${PROG})
 		kill -SIGQUIT ${PROC_ID}
 		wait ${PROC_ID}
