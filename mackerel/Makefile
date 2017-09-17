@@ -138,6 +138,6 @@ $(eval $(call BuildPackage,mackerel-agent))
 # Plugin packages
 #$(eval $(call BuildPlugin,NAME,DESCRIPTION,DEPENDENCIES))
 $(eval $(call BuildPlugin,conntrack,nf_conntrack custom metrics,))
-$(eval $(call BuildPlugin,linux,Get linux process metrics,))
+$(eval $(call BuildPlugin,linux,Get linux process metrics,+ss +coreutils +coreutils-who))
 $(eval $(call BuildPlugin,multicore,Get multicore CPU metrics,))
 $(eval $(call BuildPlugin,uptime,uptime custom metrics,))
