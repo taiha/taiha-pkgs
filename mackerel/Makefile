@@ -17,6 +17,8 @@ PKG_SOURCE_VERSION:=641dcec3f41507904fd22620a4244620bc901746
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=
 
+SCRIPT_PLUGINS:= temp
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mackerel-agent/Default
@@ -115,18 +117,24 @@ define BuildPlugin
 	if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then \
 		mkdir $(PKG_BUILD_DIR)/plugins ; \
 	fi
-
-	go get github.com/mackerelio/mackerel-agent-plugins
-	$(GO_PARAMS) \
+	# $(1) is not found in $(SCRIPT_PLUGINS)
+	$(if $(filter $(1),$(SCRIPT_PLUGINS)),,
+		go get github.com/mackerelio/mackerel-agent-plugins
 		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
 			$(GOPATH)/src/github.com/mackerelio/mackerel-agent-plugins/mackerel-plugin-$(1)/main.go
+	)
   endef
 
   define Package/mackerel-plugin-$(1)/install
 	$$(call Package/mackerel-plugin-$(1)/compile)
 	$(INSTALL_DIR) $$(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-		$$(1)/usr/sbin/
+	# $(if [var],[not empty or true],[empty or false])
+	$(if $(filter $(1),$(SCRIPT_PLUGINS)),
+		$(INSTALL_BIN) ./files/mackerel-plugin-$(1).sh \
+			$$(1)/usr/sbin/ ,
+		$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
+			$$(1)/usr/sbin/
+	)
   endef
 
   $$(eval $$(call BuildPackage,mackerel-plugin-$(1)))
@@ -141,3 +149,4 @@ $(eval $(call BuildPlugin,conntrack,nf_conntrack custom metrics,))
 $(eval $(call BuildPlugin,linux,Get linux process metrics,+ss +coreutils +coreutils-who))
 $(eval $(call BuildPlugin,multicore,Get multicore CPU metrics,))
 $(eval $(call BuildPlugin,uptime,uptime custom metrics,))
+$(eval $(call BuildPlugin,temp,Get CPU/SoC temperature,))
