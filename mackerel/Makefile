@@ -120,8 +120,9 @@ define BuildPlugin
 	# $(1) is not found in $(SCRIPT_PLUGINS)
 	$(if $(filter $(1),$(SCRIPT_PLUGINS)),,
 		go get github.com/mackerelio/mackerel-agent-plugins
-		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-			$(GOPATH)/src/github.com/mackerelio/mackerel-agent-plugins/mackerel-plugin-$(1)/main.go
+		$(GO_PARAMS) \
+			go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
+				$(GOPATH)/src/github.com/mackerelio/mackerel-agent-plugins/mackerel-plugin-$(1)/main.go
 	)
   endef
 
