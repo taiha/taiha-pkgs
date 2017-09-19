@@ -131,7 +131,7 @@ define BuildPlugin
 	$(INSTALL_DIR) $$(1)/usr/sbin
 	# $(if [var],[not empty or true],[empty or false])
 	$(if $(filter $(1),$(SCRIPT_PLUGINS)),
-		$(INSTALL_BIN) ./files/mackerel-plugin-$(1).sh \
+		$(INSTALL_BIN) ./plugins/mackerel-plugin-$(1).sh \
 			$$(1)/usr/sbin/ ,
 		$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
 			$$(1)/usr/sbin/
