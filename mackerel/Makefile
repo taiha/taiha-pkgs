@@ -17,7 +17,7 @@ PKG_SOURCE_VERSION:=641dcec3f41507904fd22620a4244620bc901746
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=
 
-SCRIPT_PLUGINS:= temp
+SCRIPT_PLUGINS:= temp portlink
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -151,3 +151,4 @@ $(eval $(call BuildPlugin,linux,Get linux process metrics,+ss +coreutils +coreut
 $(eval $(call BuildPlugin,multicore,Get multicore CPU metrics,))
 $(eval $(call BuildPlugin,uptime,uptime custom metrics,))
 $(eval $(call BuildPlugin,temp,Get CPU/SoC temperature,))
+$(eval $(call BuildPlugin,portlink,Get link speed of ethernet ports,))
