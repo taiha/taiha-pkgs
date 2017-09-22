@@ -53,6 +53,6 @@ Select and check the following package:
 
 ## Special thanks
 
-- Shell command in Makefile [Makefile#L115](../Makefile#L115)
+- Shell command in Makefile [Makefile#L117](../Makefile#L117)
 
   - orumin (kotatsu_mi)
