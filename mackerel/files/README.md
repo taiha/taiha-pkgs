@@ -36,6 +36,21 @@ Select and check the following package:
 
 ```(root) -> Administration -> mackerel-agent```
 
+## Plugins
+
+- [mackerel-plugin-conntrack (official)](https://github.com/mackerelio/mackerel-agent-plugins/tree/master/mackerel-plugin-conntrack)
+- [mackerel-plugin-linux (official)](https://github.com/mackerelio/mackerel-agent-plugins/tree/master/mackerel-plugin-linux)
+- [mackerel-plugin-multicore (official)](https://github.com/mackerelio/mackerel-agent-plugins/tree/master/mackerel-plugin-multicore)
+- [mackerel-plugin-uptime (official)](https://github.com/mackerelio/mackerel-agent-plugins/tree/master/mackerel-plugin-uptime)
+- mackerel-plugin-temp (original)
+
+  - Get system temperature (thermal_zone0) if available.
+
+- mackerel-plugin-portlink (original)
+
+  - Get link speed of ethernet ports on switch0 (vlans <= 5).
+
+
 ## Special thanks
 
 - Shell command in Makefile [Makefile#L115](../Makefile#L115)
