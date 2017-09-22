@@ -52,9 +52,9 @@ for app in $PROTO; do
 	fi
 	if [ "$rxBytes" != "0" ] || [ "$rxPkts" != "0" ] || [ "$txBytes" != "0" ] || [ "$txPkts" != "0" ] ; then
 		echo -e "${PLUGIN_NAME}${app}.rxBytes\t${rxBytes}\t${SECONDS}"
-		echo -e "${PLUGIN_NAME}${app}.rxBytes\t${rxPkts}\t${SECONDS}"
+		echo -e "${PLUGIN_NAME}${app}.rxPkts\t${rxPkts}\t${SECONDS}"
 		echo -e "${PLUGIN_NAME}${app}.txBytes\t${txBytes}\t${SECONDS}"
-		echo -e "${PLUGIN_NAME}${app}.txBytes\t${txPkts}\t${SECONDS}"
+		echo -e "${PLUGIN_NAME}${app}.txPkts\t${txPkts}\t${SECONDS}"
 	fi
 done
 
