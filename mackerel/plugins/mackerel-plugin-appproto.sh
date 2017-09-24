@@ -1,8 +1,17 @@
 #!/bin/sh
 SECONDS=`date '+%s'`
 
-PLUGIN_NAME='appproto.'
+PLUGIN_NAME='appproto'
+GRAPH_PREFIX="# mackerel-agent-plugin\n"
+GRAPH_DEF="{\"graphs\":{"
+GRAPH_DEF="${GRAPH_DEF}\"appproto.bytes.#\":{\"label\":\"Application Protocols (Bytes)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":false}]},"
+GRAPH_DEF="${GRAPH_DEF}\"appproto.pkts.#\":{\"label\":\"Application Protocols (Packets)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":false}]}"
+GRAPH_DEF="${GRAPH_DEF}}}"
 
+if [ -n "$MACKEREL_AGENT_PLUGIN_META" ]; then
+	echo -e ${GRAPH_PREFIX}${GRAPH_DEF}
+	exit 0
+fi
 # Load json tool
 . /usr/share/libubox/jshn.sh
 
@@ -27,8 +36,8 @@ json_get_keys rows
 
 for row in $rows; do
 	# Select row in data
-	json_select row
-	# Get items in row
+	json_select $row
+	# Get items in row (not using)
 	json_get_keys items
 	# Get values in row
 	json_get_var nlbw_proto 11	# application protocol
@@ -60,10 +69,9 @@ for app in $PROTO; do
 	txBytes=$(eval echo \"\$txBytes_$app\")
 	txPkts=$(eval echo \"\$txPkts_$app\")
 	if [ "$rxBytes" != "0" ] || [ "$rxPkts" != "0" ] || [ "$txBytes" != "0" ] || [ "$txPkts" != "0" ] ; then
-		echo -e "${PLUGIN_NAME}${app}.rxBytes\t${rxBytes}\t${SECONDS}"
-		echo -e "${PLUGIN_NAME}${app}.rxPkts\t${rxPkts}\t${SECONDS}"
-		echo -e "${PLUGIN_NAME}${app}.txBytes\t${txBytes}\t${SECONDS}"
-		echo -e "${PLUGIN_NAME}${app}.txPkts\t${txPkts}\t${SECONDS}"
+		echo -e "${PLUGIN_NAME}.bytes.${app}.rxBytes\t${rxBytes}\t${SECONDS}"
+		echo -e "${PLUGIN_NAME}.pkts.${app}.rxPkts\t${rxPkts}\t${SECONDS}"
+		echo -e "${PLUGIN_NAME}.bytes.${app}.txBytes\t${txBytes}\t${SECONDS}"
+		echo -e "${PLUGIN_NAME}.pkts.${app}.txPkts\t${txPkts}\t${SECONDS}"
 	fi
 done
-
