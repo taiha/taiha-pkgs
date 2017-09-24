@@ -25,7 +25,7 @@ for app in $PROTO; do
 done
 
 # Load json from nlbw
-NLBW_JSON=$(nlbw -c json)
+NLBW_JSON=$(nlbw -c json -g layer7)
 json_load $NLBW_JSON
 
 # Select "data" field
@@ -40,11 +40,11 @@ for row in $rows; do
 	# Get items in row (not using)
 	json_get_keys items
 	# Get values in row
-	json_get_var nlbw_proto 11	# application protocol
-	json_get_var rx_bytes 7		# rx bytes
-	json_get_var rx_pkts 8		# rx packets
-	json_get_var tx_bytes 9		# tx bytes
-	json_get_var tx_pkts 10		# tx packets
+	json_get_var nlbw_proto 8	# application protocol
+	json_get_var rx_bytes 4		# rx bytes
+	json_get_var rx_pkts 5		# rx packets
+	json_get_var tx_bytes 6		# tx bytes
+	json_get_var tx_pkts 7		# tx packets
 	# Return to upper level
 	json_select ..
 
@@ -57,10 +57,10 @@ for row in $rows; do
 		nlbw_proto="Other"
 	fi
 
-	eval rxBytes_${nlbw_proto}=$(( rxBytes_${nlbw_proto} + $rx_bytes))
-	eval rxPkts_${nlbw_proto}=$(( rxPkts_${nlbw_proto} + $rx_pkts))
-	eval txBytes_${nlbw_proto}=$(( txBytes_${nlbw_proto} + $tx_bytes))
-	eval txPkts_${nlbw_proto}=$(( txPkts_${nlbw_proto} + $tx_pkts))
+	eval rxBytes_${nlbw_proto}=$rx_bytes
+	eval rxPkts_${nlbw_proto}=$rx_pkts
+	eval txBytes_${nlbw_proto}=$tx_bytes
+	eval txPkts_${nlbw_proto}=$tx_pkts
 done
 
 for app in $PROTO; do
