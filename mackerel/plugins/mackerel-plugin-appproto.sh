@@ -4,8 +4,8 @@ SECONDS=`date '+%s'`
 PLUGIN_NAME='appproto'
 GRAPH_PREFIX="# mackerel-agent-plugin\n"
 GRAPH_DEF="{\"graphs\":{"
-GRAPH_DEF="${GRAPH_DEF}\"appproto.bytes.#\":{\"label\":\"Application Protocols (Bytes)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":false}]},"
-GRAPH_DEF="${GRAPH_DEF}\"appproto.pkts.#\":{\"label\":\"Application Protocols (Packets)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":false}]}"
+GRAPH_DEF="${GRAPH_DEF}\"appproto.bytes.#\":{\"label\":\"Application Protocols (Bytes)\",\"unit\":\"bytes\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":true}]},"
+GRAPH_DEF="${GRAPH_DEF}\"appproto.pkts.#\":{\"label\":\"Application Protocols (Packets)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":true}]}"
 GRAPH_DEF="${GRAPH_DEF}}}"
 
 if [ -n "$MACKEREL_AGENT_PLUGIN_META" ]; then
