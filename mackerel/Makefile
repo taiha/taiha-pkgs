@@ -11,11 +11,13 @@ PKG_VERSION:=0.44.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/taiha/mackerel-agent.git
-PKG_SOURCE_VERSION:=641dcec3f41507904fd22620a4244620bc901746
+PKG_SOURCE_URL:=https://github.com/mackerelio/mackerel-agent.git
+PKG_SOURCE_VERSION:=a41e054589b2962ad5718b2c61913b8d24b16633
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=
+
+PKG_FIXUP:=autoreconf
 
 SCRIPT_PLUGINS:= temp portlink
 
