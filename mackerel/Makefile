@@ -17,8 +17,6 @@ PKG_SOURCE_VERSION:=a41e054589b2962ad5718b2c61913b8d24b16633
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=
 
-PKG_FIXUP:=autoreconf
-
 SCRIPT_PLUGINS:= temp portlink
 
 include $(INCLUDE_DIR)/package.mk
@@ -79,7 +77,6 @@ endif
 GO_PARAMS:=GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF)
 
 define Build/Configure
-	tar xvf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.xz -C $(BUILD_DIR)
 	make -C $(PKG_BUILD_DIR) generate
 endef
 
