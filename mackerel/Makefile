@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mackerel-agent
-PKG_VERSION:=0.44.2
+PKG_VERSION:=0.45.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/taiha/mackerel-agent.git
-PKG_SOURCE_VERSION:=641dcec3f41507904fd22620a4244620bc901746
+PKG_SOURCE_URL:=https://github.com/mackerelio/mackerel-agent.git
+PKG_SOURCE_VERSION:=a41e054589b2962ad5718b2c61913b8d24b16633
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=
@@ -77,7 +77,6 @@ endif
 GO_PARAMS:=GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF)
 
 define Build/Configure
-	tar xvf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.xz -C $(BUILD_DIR)
 	make -C $(PKG_BUILD_DIR) generate
 endef
 
