@@ -152,4 +152,5 @@ $(eval $(call BuildPlugin,uptime,$(OFFICIAL_REPO),/$(PREFIX)-uptime,uptime custo
 $(eval $(call BuildPlugin,temp,,,Get CPU/SoC temperature,))
 $(eval $(call BuildPlugin,portlink,,,Get link speed of ethernet ports,))
 $(eval $(call BuildPlugin,appproto,,,Get Bytes/Packets of application protocols,+nlbwmon))
+$(eval $(call BuildPlugin,mastodon,,,Get statisics of Mastodon instances,+curl))
 # Third party plugins
