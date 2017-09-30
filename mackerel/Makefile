@@ -24,7 +24,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mackerel-agent/Default
   SECTION:=admin
   CATEGORY:=Administration
-  TITLE:=The server monitoring platform
   URL:=https://mackerel.io/
   MAINTAINER:=musashino205
 endef
@@ -108,30 +107,27 @@ define BuildPlugin
 
   define Package/mackerel-plugin-$(1)
   $$(call Package/mackerel-agent/Default)
-    TITLE:=$(2) plugin
-    DEPENDS:= mackerel-agent $(3)
+    TITLE:=$(4) plugin
+    DEPENDS:= mackerel-agent $(5)
   endef
 
   define Package/mackerel-plugin-$(1)/compile
 	if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then \
 		mkdir $(PKG_BUILD_DIR)/plugins ; \
 	fi
-	# $(1) is not found in $(SCRIPT_PLUGINS)
-	$(if $(filter $(1),$(SCRIPT_PLUGINS)),,
-		go get github.com/mackerelio/mackerel-agent-plugins
-		$(GO_PARAMS) \
-			go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-				$(GOPATH)/src/github.com/mackerelio/mackerel-agent-plugins/mackerel-plugin-$(1)/main.go
-	)
+	go get github.com/$(2)
+	$(GO_PARAMS) \
+		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
+			$(GOPATH)/src/github.com/$(2)$(3)/main.go
   endef
 
   define Package/mackerel-plugin-$(1)/install
-	$$(call Package/mackerel-plugin-$(1)/compile)
 	$(INSTALL_DIR) $$(1)/usr/sbin
 	# $(if [var],[not empty or true],[empty or false])
 	$(if $(filter $(1),$(SCRIPT_PLUGINS)),
 		$(INSTALL_BIN) ./plugins/mackerel-plugin-$(1).sh \
 			$$(1)/usr/sbin/ ,
+		$$(call Package/mackerel-plugin-$(1)/compile)
 		$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
 			$$(1)/usr/sbin/
 	)
@@ -143,12 +139,18 @@ endef
 # Main package
 $(eval $(call BuildPackage,mackerel-agent))
 
+OFFICIAL_REPO:=mackerelio/mackerel-agent-plugins
+PREFIX:=mackerel-plugin
 # Plugin packages
-#$(eval $(call BuildPlugin,NAME,DESCRIPTION,DEPENDENCIES))
-$(eval $(call BuildPlugin,conntrack,nf_conntrack custom metrics,))
-$(eval $(call BuildPlugin,linux,Get linux process metrics,+ss +coreutils +coreutils-who))
-$(eval $(call BuildPlugin,multicore,Get multicore CPU metrics,))
-$(eval $(call BuildPlugin,uptime,uptime custom metrics,))
-$(eval $(call BuildPlugin,temp,Get CPU/SoC temperature,))
-$(eval $(call BuildPlugin,portlink,Get link speed of ethernet ports,))
-$(eval $(call BuildPlugin,appproto,Get Bytes/Packets of application protocols,+nlbwmon))
+#$(eval $(call BuildPlugin,NAME(1),REPO(2),DIR(3),DESCRIPTION(4),DEPENDENCIES(5)))
+# Official plugins
+$(eval $(call BuildPlugin,conntrack,$(OFFICIAL_REPO),/$(PREFIX)-conntrack,nf_conntrack custom metrics,))
+$(eval $(call BuildPlugin,linux,$(OFFICIAL_REPO),/$(PREFIX)-linux,Get linux process metrics,+ss +coreutils +coreutils-who))
+$(eval $(call BuildPlugin,multicore,$(OFFICIAL_REPO),/$(PREFIX)-multicore,Get multicore CPU metrics,))
+$(eval $(call BuildPlugin,uptime,$(OFFICIAL_REPO),/$(PREFIX)-uptime,uptime custom metrics,))
+# Script plugins
+$(eval $(call BuildPlugin,temp,,,Get CPU/SoC temperature,))
+$(eval $(call BuildPlugin,portlink,,,Get link speed of ethernet ports,))
+$(eval $(call BuildPlugin,appproto,,,Get Bytes/Packets of application protocols,+nlbwmon))
+$(eval $(call BuildPlugin,mastodon,,,Get statisics of Mastodon instances,+curl))
+# Third party plugins
