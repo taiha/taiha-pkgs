@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mackerel-agent
-PKG_VERSION:=0.46.0
+PKG_VERSION:=0.47.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
