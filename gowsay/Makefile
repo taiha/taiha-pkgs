@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/gowsay
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=https://mackerel.io/
+  URL:=https://github.com/syohex/gowsay
   TITLE:=cowsay implementation in Golang
   MAINTAINER:=musashino205
 endef
