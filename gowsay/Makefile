@@ -57,7 +57,7 @@ endif
 GO_PARAMS:=GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF)
 
 define Build/Prepare
-	go get -u github.com/syohex/gowsay.git
+	go get -u github.com/syohex/gowsay
 endef
 
 define Build/Configure
