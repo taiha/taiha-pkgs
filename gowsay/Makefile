@@ -64,7 +64,8 @@ define Build/Configure
 endef
 
 define Build/Compile
-	$(GO_PARAMS) go build -o $(PKG_BUILD_DIR)/gowsay \
+	$(GO_PARAMS) go build -ldflags="-s -w" \
+		-o $(PKG_BUILD_DIR)/gowsay \
 		$(GOPATH)/src/github.com/syohex/gowsay/*.go
 	upx $(PKG_BUILD_DIR)/gowsay
 endef
