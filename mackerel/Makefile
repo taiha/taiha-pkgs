@@ -31,6 +31,7 @@ endef
 define Package/mackerel-agent
   $(call Package/mackerel-agent/Default)
   TITLE:=The server monitoring platform
+  DEPENDS:= +ca-certificates
   MENU:=1
 endef
 
