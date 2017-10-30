@@ -17,7 +17,7 @@ PKG_SOURCE_VERSION:=b76114c8e5e6ffee8029355e016209afe9734e12
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=
 
-SCRIPT_PLUGINS:= temp portlink appproto
+SCRIPT_PLUGINS:= temp portlink appproto mastodon
 
 include $(INCLUDE_DIR)/package.mk
 
