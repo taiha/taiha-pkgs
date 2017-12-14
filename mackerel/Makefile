@@ -30,15 +30,15 @@ endef
 
 define Package/mackerel-agent
   $(call Package/mackerel-agent/Default)
-  TITLE:=The server monitoring platform
+  TITLE:=agent program to post your hosts' metrics to mackerel.io
   DEPENDS:= +ca-certificates
   MENU:=1
 endef
 
 define Package/mackerel-agent/description
-  "The server monitoring platform we always wanted."
-  Precisely tuned graphs, role-based architecture, fully customizable notifications,
-  congruency with autoscale, and other innovative features.
+  mackerel-agent is a piece of software which is installed
+  on your hosts to collect metrics and events and send them
+  to Mackerel where they can be visualized and monitored.
 endef
 
 # mackerel-agent configuration files
