@@ -76,11 +76,10 @@ ifeq ($(ARCH),x86_64)		# for x86_64 (amd64) SoC/CPU
 endif
 GO_PARAMS:=GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF)
 
-define Build/Configure
-	make -C $(PKG_BUILD_DIR) generate
-endef
-
 define Build/Compile
+	# required in cmdutil/cmdutil.go (exitStatus.Signaled)
+	go get -u github.com/Songmu/timeout
+
 	$(GO_PARAMS) make CC=gcc -C $(PKG_BUILD_DIR) build
 	upx $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
