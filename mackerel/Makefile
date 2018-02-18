@@ -115,7 +115,7 @@ define BuildPlugin
 	if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then \
 		mkdir $(PKG_BUILD_DIR)/plugins ; \
 	fi
-	go get github.com/$(2)
+	go get -u github.com/$(2)
 	$(GO_PARAMS) \
 		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
 			$(GOPATH)/src/github.com/$(2)$(3)/main.go
