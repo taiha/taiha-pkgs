@@ -1,27 +1,57 @@
 #!/bin/sh
 
 # Get switches
+# 0 1 2 ...
 SWITCHES=$(uci -q show network | \
-	grep -E "network\.@switch\[\d\]\.name" | \
-	sed "s/network\.@switch\[\d\]\.name='\(switch[0-9]\+\)'/\1/")
+	grep -E "network\.@switch\[\d\]=switch" | \
+	sed "s/network\.@switch\[\(\d\)\]=switch/\1/")
 
-# graph define
 PLUGIN_NAME="portlink"
-cnt="0"
-for sw in $SWITCHES; do
-	if [ ! "$cnt" = "0" ]; then
-		SW_GRAPH_DEF="${SW_GRAPH_DEF},"
-	fi
-	SW_GRAPH_DEF="${SW_GRAPH_DEF}\"${PLUGIN_NAME}.${sw}.#\":{\"label\":\"Ethernet LinkSpeed on ${sw} (Mbps)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":false}]}"
-	cnt=$(( cnt + 1 ))
-done
 
-GRAPH_DEF="# mackerel-agent-plugin\n"
-GRAPH_DEF="${GRAPH_DEF}{\"graphs\":{"
-GRAPH_DEF="${GRAPH_DEF}${SW_GRAPH_DEF}"
-GRAPH_DEF="${GRAPH_DEF}}}"
+get_sw_property(){
+	local sw_index="$1"
+	local sw_property="$2"
+
+	uci -q get network.@switch["${sw_index}"].$sw_property 2> /dev/null
+}
+
+get_vlan_property(){
+	local vlan_index="$1"
+	local vlan_property="$2"
+
+	uci -q get network.@switch_vlan["${vlan_index}"].$vlan_property 2> /dev/null
+}
+
+get_sw_portspeed(){
+	local sw_index="$1"
+	local port="$2"
+
+	local port_link="$(swconfig dev $sw_index port $port get link 2> /dev/null)"
+	local port_status="$(echo $port_link | grep -oE "link:(\w+)" | sed "s/link:\(down\|up\)/\1/")"
+
+	if [ "$port_status" = "down" ]; then	# port is down
+		echo "0"
+	else								# port is up
+		echo $port_link | grep -oE "speed:(\d+)" | sed "s/speed:\(\d\+\)/\1/"
+	fi
+}
 
 if [ -n "$MACKEREL_AGENT_PLUGIN_META" ]; then
+	cnt="0"
+	for sw in $SWITCHES; do
+		sw_name="$(get_sw_property $sw "name")"
+		if [ ! "$cnt" = "0" ]; then
+			SW_GRAPH_DEF="${SW_GRAPH_DEF},"
+		fi
+		SW_GRAPH_DEF="${SW_GRAPH_DEF}\"${PLUGIN_NAME}.${sw_name}.#\":{\"label\":\"Ethernet LinkSpeed on ${sw_name} (Mbps)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":false}]}"
+		cnt=$(( cnt + 1 ))
+	done
+
+	GRAPH_DEF="# mackerel-agent-plugin\n"
+	GRAPH_DEF="${GRAPH_DEF}{\"graphs\":{"
+	GRAPH_DEF="${GRAPH_DEF}${SW_GRAPH_DEF}"
+	GRAPH_DEF="${GRAPH_DEF}}}"
+
 	echo -e "${GRAPH_DEF}"
 	exit 0
 fi
@@ -34,29 +64,24 @@ VLAN_CFGS=$(uci -q show network | \
 	sed "s/network\.@switch_vlan\[\(\d\)\]=switch_vlan/\1/")
 
 for sw in $SWITCHES; do
-	SW_NUM="$(echo $sw | tr -d "[a-z]")"	# e.g.: switch0 -> 0
+	sw_name="$(get_sw_property $sw "name")"	# "0" -> "switch0"
 
-	for cfg in $VLAN_CFGS; do
+	for vlan in $VLAN_CFGS; do
 		# Get switch device from vlans
-		SW_DEV=$(uci -q get network.@switch_vlan[${cfg}].device)
+		sw_dev=$(get_vlan_property $vlan "device")
 
-		if [ "$SW_DEV" = "${sw}" ]; then
+		if [ "$sw_dev" = "$sw_name" ]; then
 			# VLAN ID (e.g.: eth0."1")
-			SW_VLAN_ID="$(uci -q get network.@switch_vlan[${cfg}].vlan)"
+			vlan_id="$(get_vlan_property "${vlan}" "vlan")"
 			# ports in vlan
-			SW_VLAN_PORTS=$(uci -q get network.@switch_vlan[${cfg}].ports | sed "s/\d\+t//g")
-			ETH="${SW_NUM}_${SW_VLAN_ID}"	# e.g.: 0.1 -> 0_1
+			vlan_ports="$(get_vlan_property "${vlan}" "ports" | sed "s/\d\+t//g")"
+			vlan_eth="${sw}_${vlan_id}"	# e.g.: 0.1 -> 0_1
 
-			for port in $SW_VLAN_PORTS; do
-				PREFIX="${PLUGIN_NAME}.${sw}.eth${ETH}.port${port}"
-				LINK_STATUS=`swconfig dev $sw port $port get link | grep -oE "link:(\w+)" | grep -oE "(down|up)"`
-				LINK_SPEED=`swconfig dev $sw port $port get link | grep -oE "speed:(\d+)" | grep -oE "\d+"`
+			for port in $vlan_ports; do
+				prefix="${PLUGIN_NAME}.${sw_name}.eth${vlan_eth}.port${port}"
+				link_speed="$(get_sw_portspeed $sw_name $port)"
 
-				# Set LINK_SPEED=0 if port status is "down"
-				if [ "$LINK_STATUS" = "down" ]; then
-					LINK_SPEED=0
-				fi
-				echo -e "${PREFIX}\t${LINK_SPEED}\t${SECONDS}"
+				echo -e "${prefix}\t${link_speed}\t${SECONDS}"
 			done
 		fi
 	done
