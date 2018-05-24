@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mackerel-agent
-PKG_VERSION:=0.53.0
+PKG_VERSION:=0.54.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mackerelio/mackerel-agent.git
-PKG_SOURCE_VERSION:=bf64e4de030415c1574b0babf89186e18e8edec0
+PKG_SOURCE_VERSION:=13a938ef07fab7c9e0dc660c3ff9b86838d57488
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=
@@ -30,7 +30,7 @@ endef
 
 define Package/mackerel-agent
   $(call Package/mackerel-agent/Default)
-  TITLE:=agent program to post your hosts' metrics to mackerel.io
+  TITLE:=agent program to post your host's metrics to mackerel.io
   DEPENDS:= +ca-certificates
   MENU:=1
 endef
