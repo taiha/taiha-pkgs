@@ -16,23 +16,15 @@ PROG="/usr/bin/${NAME}"
 
 # Files
 CONFFILE="/etc/config/${NAME}.conf"
-IDFILE="${ROOTDIR}/id"
 PIDFILE="/var/run/${NAME}.pid"
 
 # Command lines
 OPTIONS="-conf=${CONFFILE} -pidfile=${PIDFILE}"
-DEV_ID=$(cat ${IDFILE})
 
 start()
 {
 	if [ ! -d ${ROOTDIR} ]; then
 		mkdir ${ROOTDIR}
-	else
-		if [ -f ${IDFILE} ]; then
-			if [ -z "${DEV_ID}" ] || [ "${DEV_ID}" = "emptyid" ]; then
-				rm -f ${IDFILE}
-			fi
-		fi
 	fi
 	ulimit -n 65536 1>/dev/null 2>&1 || true
 	${PROG} ${OPTIONS} 2>&1 | logger -t mackerel-agent &
