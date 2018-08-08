@@ -15,7 +15,7 @@ PKG_SOURCE_URL:=https://github.com/mackerelio/mackerel-agent.git
 PKG_SOURCE_VERSION:=0de179fa398bdd1b7c43977e78dfd787851ced27
 
 PKG_LICENSE:=Apache-2.0
-PKG_LICENSE_FILES:=
+PKG_LICENSE_FILES:=LICENSE
 
 SCRIPT_PLUGINS:= temp portlink appproto mastodon
 
