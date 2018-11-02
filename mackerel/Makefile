@@ -47,40 +47,36 @@ define Package/mackerel-agent/conffiles
 /etc/mackerel-agent/id
 endef
 
-# golang cross-compile architecture (GOARCH)
-PKG_GOARCH:=
-# golang soft-float support (GOARM/GOMIPS)
-GO_SF:=
-# set GOARCH and GOARM/GOMIPS by $(ARCH)
-ifeq ($(ARCH),mips)		# for MIPS big-endianess SoC
-	PKG_GOARCH:=mips
-	GO_SF:=GOMIPS=softfloat
-endif
-ifeq ($(ARCH),mipsel)		# for MIPS little-endianess SoC
-	PKG_GOARCH:=mipsle
-	GO_SF:=GOMIPS=softfloat
-endif
-ifeq ($(ARCH),mips64)		# for MIPS64 big-endianess SoC
-	PKG_GOARCH:=mips64
-	GO_SF:=GOMIPS=softfloat
-endif
-ifeq ($(ARCH),arm)		# for ARM SoC
-	PKG_GOARCH:=arm
-	GO_SF:=GOARM=5
-endif
-ifeq ($(ARCH),i386)		# for x86 (i386) SoC/CPU
-	PKG_GOARCH:=386
-endif
-ifeq ($(ARCH),x86_64)		# for x86_64 (amd64) SoC/CPU
-	PKG_GOARCH:=amd64
-endif
-GO_PARAMS:=GOOS=linux GOARCH=$(PKG_GOARCH) $(GO_SF)
+#
+# Environment - referred to lang/golang in openwrt/packages
+#
+go_arch=$(subst \
+  aarch64,arm64,$(subst \
+  i386,386,$(subst \
+  mipsel,mipsle,$(subst \
+  mips64el,mips64le,$(subst \
+  powerpc64,ppc64,$(subst \
+  x86_64,amd64,$(1)))))))
+
+GO_PKG_GOOS:=linux
+GO_PKG_ARCH:=$(call go_arch,$(ARCH))
+GO_PKG_386:=387
+GO_PKG_ARM:=$(if $(CONFIG_arm_v7),7,$(if $(CONFIG_arm_v6),6,$(if $(findstring $(GO_ARCH),arm),5,)))
+GO_PKG_MIPS:=$(if $(filter $(GO_PKG_ARCH),mips mipsle),$(if $(CONFIG_HAS_FPU),hardfloat,softfloat),)
+
+define GoPackage/Environment
+	GOOS=$(GO_PKG_GOOS) \
+	GOARCH=$(GO_PKG_ARCH) \
+	GO386=$(GO_PKG_386) \
+	GOARM=$(GO_PKG_ARM) \
+	GOMIPS=$(GO_PKG_MIPS)
+endef
 
 define Build/Compile
 	# required in cmdutil/cmdutil.go (exitStatus.Signaled)
 	go get -u github.com/Songmu/timeout
 
-	$(GO_PARAMS) make CC=gcc -C $(PKG_BUILD_DIR) build
+	$(call GoPackage/Environment) make CC=gcc -C $(PKG_BUILD_DIR) build
 	upx $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
 
@@ -116,7 +112,7 @@ define BuildPlugin
 		mkdir $(PKG_BUILD_DIR)/plugins ; \
 	fi
 	go get -u github.com/$(2)
-	$(GO_PARAMS) \
+	$(call GoPackage/Environment) \
 		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
 			$(GOPATH)/src/github.com/$(2)$(3)/main.go
   endef
