@@ -12,8 +12,8 @@ PKG_VERSION:=5.02
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/taiha/sl.git
-PKG_SOURCE_VERSION:=9931bcdb70b440829fcd1b8aa319fe5d806c0a3f
+PKG_SOURCE_URL:=https://github.com/mtoyoda/sl.git
+PKG_SOURCE_VERSION:=923e7d7ebc5c1f009755bdeb789ac25658ccce03
 PKG_MIRROR_HASH:=
 PKG_MAINTAINER:=musashino205
 
