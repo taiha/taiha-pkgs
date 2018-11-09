@@ -61,7 +61,7 @@ go_arch=$(subst \
 GO_PKG_GOOS:=linux
 GO_PKG_ARCH:=$(call go_arch,$(ARCH))
 GO_PKG_386:=387
-GO_PKG_ARM:=$(if $(CONFIG_arm_v7),7,$(if $(CONFIG_arm_v6),6,$(if $(findstring $(GO_ARCH),arm),5,)))
+GO_PKG_ARM:=$(if $(findstring $(GO_PKG_ARCH),arm),$(if $(CONFIG_HAS_FPU),$(if $(CONFIG_arm_v7),7,$(if $(CONFIG_arm_v6),6,5)),5),)
 GO_PKG_MIPS:=$(if $(filter $(GO_PKG_ARCH),mips mipsle),$(if $(CONFIG_HAS_FPU),hardfloat,softfloat),)
 
 define GoPackage/Environment
