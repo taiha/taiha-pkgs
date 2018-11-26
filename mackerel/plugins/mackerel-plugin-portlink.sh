@@ -1,49 +1,39 @@
 #!/bin/sh
 
-# Get switches
-# 0 1 2 ...
-SWITCHES=$(uci -q show network | \
-	grep -E "network\.@switch\[\d\]=switch" | \
-	sed "s/network\.@switch\[\(\d\)\]=switch/\1/")
+. /usr/share/libubox/jshn.sh
 
 PLUGIN_NAME="portlink"
 
-get_sw_property(){
-	local sw_index="$1"
-	local sw_property="$2"
-
-	uci -q get network.@switch["${sw_index}"].$sw_property 2> /dev/null
-}
-
-get_vlan_property(){
-	local vlan_index="$1"
-	local vlan_property="$2"
-
-	uci -q get network.@switch_vlan["${vlan_index}"].$vlan_property 2> /dev/null
-}
-
-get_sw_portspeed(){
+get_sw_portspeed() {
 	local sw_index="$1"
 	local port="$2"
 
 	local port_link="$(swconfig dev $sw_index port $port get link 2> /dev/null)"
 	local port_status="$(echo $port_link | grep -oE "link:(\w+)" | sed "s/link:\(down\|up\)/\1/")"
 
-	if [ "$port_status" = "down" ]; then	# port is down
+	[ "$port_status" = "up" ] && \
+		echo $port_link | grep -oE "speed:(\d+)" | sed "s/speed:\(\d\+\)/\1/" ||
 		echo "0"
-	else								# port is up
-		echo $port_link | grep -oE "speed:(\d+)" | sed "s/speed:\(\d\+\)/\1/"
-	fi
 }
 
+[ -r "/etc/board.json" ] || exit 1
+json_init
+json_load_file "/etc/board.json"
+
+json_select switch
+	json_get_keys switches
+json_select ..
+
+[ -z "$switches" ] && exit 0
+
+# print graph definition
 if [ -n "$MACKEREL_AGENT_PLUGIN_META" ]; then
 	cnt="0"
-	for sw in $SWITCHES; do
-		sw_name="$(get_sw_property $sw "name")"
+	for sw in $switches; do
 		if [ ! "$cnt" = "0" ]; then
 			SW_GRAPH_DEF="${SW_GRAPH_DEF},"
 		fi
-		SW_GRAPH_DEF="${SW_GRAPH_DEF}\"${PLUGIN_NAME}.${sw_name}.#\":{\"label\":\"Ethernet LinkSpeed on ${sw_name} (Mbps)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":false}]}"
+		SW_GRAPH_DEF="${SW_GRAPH_DEF}\"${PLUGIN_NAME}.${sw}.#\":{\"label\":\"LinkSpeed on ${sw} (Mbps)\",\"unit\":\"integer\",\"metrics\":[{\"name\":\"*\",\"label\":\"%1\",\"stacked\":false}]}"
 		cnt=$(( cnt + 1 ))
 	done
 
@@ -58,31 +48,23 @@ fi
 
 SECONDS=$(date '+%s')
 
-# Get VLAN configurations
-VLAN_CFGS=$(uci -q show network | \
-	grep -E "network\.@switch_vlan\[\d\]=switch_vlan" | \
-	sed "s/network\.@switch_vlan\[\(\d\)\]=switch_vlan/\1/")
-
-for sw in $SWITCHES; do
-	sw_name="$(get_sw_property $sw "name")"	# "0" -> "switch0"
-
-	for vlan in $VLAN_CFGS; do
-		# Get switch device from vlans
-		sw_dev=$(get_vlan_property $vlan "device")
-
-		if [ "$sw_dev" = "$sw_name" ]; then
-			# VLAN ID (e.g.: eth0."1")
-			vlan_id="$(get_vlan_property "${vlan}" "vlan")"
-			# ports in vlan
-			vlan_ports="$(get_vlan_property "${vlan}" "ports" | sed "s/\d\+t//g")"
-			vlan_eth="${sw}_${vlan_id}"	# e.g.: 0.1 -> 0_1
-
-			for port in $vlan_ports; do
-				prefix="${PLUGIN_NAME}.${sw_name}.eth${vlan_eth}.port${port}"
-				link_speed="$(get_sw_portspeed $sw_name $port)"
-
-				echo -e "${prefix}\t${link_speed}\t${SECONDS}"
+for sw in $switches; do
+	json_select switch
+		json_select $sw
+			json_get_keys port_array ports
+			json_select ports
+			for index in $port_array; do
+				json_select "$index"
+					json_get_var port num
+					json_get_var eth device
+					[ -z "$eth" ] && ports="$ports $port"
+				json_select ..
 			done
-		fi
+		json_select ..
+	json_select ..
+
+	for p in $ports; do
+		link_speed="$(get_sw_portspeed $sw $p)"
+		echo -e "${PLUGIN_NAME}.$sw.port$p\t$link_speed\t$SECONDS"
 	done
 done
