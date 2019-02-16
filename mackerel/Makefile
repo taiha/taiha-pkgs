@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mackerel-agent
-PKG_VERSION:=0.58.2
+PKG_VERSION:=0.59.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mackerelio/mackerel-agent.git
-PKG_SOURCE_VERSION:=b5bee6b22f30a00d9b66c96dec7c3b9ee3827cd0
+PKG_SOURCE_VERSION:=1293e81be25acffa614970dc9d7b9213b5af5b8c
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
