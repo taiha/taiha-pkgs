@@ -77,7 +77,7 @@ define Build/Compile
 	go get -u github.com/Songmu/timeout
 
 	$(call GoPackage/Environment) make CC=gcc -C $(PKG_BUILD_DIR) build
-	upx $(PKG_BUILD_DIR)/build/mackerel-agent
+	upx --best $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
 
 define Package/mackerel-agent/install
