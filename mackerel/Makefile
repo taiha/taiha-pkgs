@@ -17,7 +17,7 @@ PKG_SOURCE_VERSION:=7cccf6d363ba4a6c5591d952dca0e7af694125b2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-SCRIPT_PLUGINS:= temp portlink appproto mastodon
+SCRIPT_PLUGINS:= temp portlink appproto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -148,5 +148,4 @@ $(eval $(call BuildPlugin,uptime,$(OFFICIAL_REPO),/$(PREFIX)-uptime,uptime custo
 $(eval $(call BuildPlugin,temp,,,Get CPU/SoC temperature,))
 $(eval $(call BuildPlugin,portlink,,,Get link speed of ethernet ports,))
 $(eval $(call BuildPlugin,appproto,,,Get Bytes/Packets of application protocols,+nlbwmon))
-$(eval $(call BuildPlugin,mastodon,,,Get statisics of Mastodon instances,+curl))
 # Third party plugins
