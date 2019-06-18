@@ -114,7 +114,8 @@ define BuildPlugin
 	go get -u github.com/$(2)
 	$(call GoPackage/Environment) \
 		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-			$(GOPATH)/src/github.com/$(2)$(3)/main.go
+			$(GOPATH)/src/github.com/$(2)$(3)/main.go \
+			$(GOPATH)/src/github.com/$(2)$(3)/lib/*.go
   endef
 
   define Package/mackerel-plugin-$(1)/install
