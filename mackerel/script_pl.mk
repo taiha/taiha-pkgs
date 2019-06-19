@@ -50,6 +50,6 @@ define Package/mackerel-plugin-appproto/install
 endef
 
 # Plugin packages
-$(eval $(call BuildPackage,mackerel-plugin-temp)
-$(eval $(call BuildPackage,mackerel-plugin-portlink)
-$(eval $(call BuildPackage,mackerel-plugin-appproto)
+$(eval $(call BuildPackage,mackerel-plugin-temp))
+$(eval $(call BuildPackage,mackerel-plugin-portlink))
+$(eval $(call BuildPackage,mackerel-plugin-appproto))
