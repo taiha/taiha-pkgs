@@ -54,22 +54,22 @@ define Download/mackerel-official-plugins
 endef
 
 define Download/mackerel-plugin-conntrack
-$(call Download/mackerel-official-plugins)
+$(Download/mackerel-official-plugins)
 endef
 $(eval $(call Download,mackerel-plugin-conntrack))
 
 define Download/mackerel-plugin-linux
-$(call Download/mackerel-official-plugins)
+$(Download/mackerel-official-plugins)
 endef
 $(eval $(call Download,mackerel-plugin-linux))
 
 define Download/mackerel-plugin-multicore
-$(call Download/mackerel-official-plugins)
+$(Download/mackerel-official-plugins)
 endef
 $(eval $(call Download,mackerel-plugin-multicore))
 
 define Download/mackerel-plugin-uptime
-$(call Download/mackerel-official-plugins)
+$(Download/mackerel-official-plugins)
 endef
 $(eval $(call Download,mackerel-plugin-uptime))
 
