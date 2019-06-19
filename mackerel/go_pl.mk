@@ -52,26 +52,7 @@ define Download/mackerel-official-plugins
   FILE:=$(PLUGIN_TAR)
   HASH:=2deb9892038a2739539ddaf9854bd6016c1c7c65e915b04941be4820a35fd7f8
 endef
-
-define Download/mackerel-plugin-conntrack
-$(Download/mackerel-official-plugins)
-endef
-$(eval $(call Download,mackerel-plugin-conntrack))
-
-define Download/mackerel-plugin-linux
-$(Download/mackerel-official-plugins)
-endef
-$(eval $(call Download,mackerel-plugin-linux))
-
-define Download/mackerel-plugin-multicore
-$(Download/mackerel-official-plugins)
-endef
-$(eval $(call Download,mackerel-plugin-multicore))
-
-define Download/mackerel-plugin-uptime
-$(Download/mackerel-official-plugins)
-endef
-$(eval $(call Download,mackerel-plugin-uptime))
+$(eval $(call Download,mackerel-official-plugins))
 
 # plugin installations
 define Package/mackerel-plugin-conntrack/install
