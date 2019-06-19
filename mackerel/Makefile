@@ -24,12 +24,12 @@ include $(INCLUDE_DIR)/host-build.mk
 # Environment - referred to lang/golang in openwrt/packages
 #
 go_arch=$(subst \
-	aarch64,arm64,$(subst \
-	i386,386,$(subst \
-	mipsel,mipsle,$(subst \
-	mips64el,mips64le,$(subst \
-	powerpc64,ppc64,$(subst \
-	x86_64,amd64,$(1)))))))
+  aarch64,arm64,$(subst \
+  i386,386,$(subst \
+  mipsel,mipsle,$(subst \
+  mips64el,mips64le,$(subst \
+  powerpc64,ppc64,$(subst \
+  x86_64,amd64,$(1)))))))
 
 GO_PKG_GOOS:=linux
 GO_PKG_ARCH:=$(call go_arch,$(ARCH))
@@ -38,31 +38,31 @@ GO_PKG_ARM:=$(if $(findstring $(GO_PKG_ARCH),arm),$(if $(CONFIG_HAS_FPU),$(if $(
 GO_PKG_MIPS:=$(if $(filter $(GO_PKG_ARCH),mips mipsle),$(if $(CONFIG_HAS_FPU),hardfloat,softfloat),)
 
 define GoPackage/Environment
-	GOOS=$(GO_PKG_GOOS) \
-	GOARCH=$(GO_PKG_ARCH) \
-	GO386=$(GO_PKG_386) \
-	GOARM=$(GO_PKG_ARM) \
-	GOMIPS=$(GO_PKG_MIPS)
+  GOOS=$(GO_PKG_GOOS) \
+  GOARCH=$(GO_PKG_ARCH) \
+  GO386=$(GO_PKG_386) \
+  GOARM=$(GO_PKG_ARM) \
+  GOMIPS=$(GO_PKG_MIPS)
 endef
 
 define Package/mackerel-agent/Default
-	SECTION:=admin
-	CATEGORY:=Administration
-	URL:=https://mackerel.io/
-	MAINTAINER:=musashino205
+  SECTION:=admin
+  CATEGORY:=Administration
+  URL:=https://mackerel.io/
+  MAINTAINER:=musashino205
 endef
 
 define Package/mackerel-agent
-	$(call Package/mackerel-agent/Default)
-	TITLE:=agent program to post your host's metrics to mackerel.io
-	DEPENDS:= +ca-certificates
-	MENU:=1
+  $(call Package/mackerel-agent/Default)
+  TITLE:=agent program to post your host's metrics to mackerel.io
+  DEPENDS:= +ca-certificates
+  MENU:=1
 endef
 
 define Package/mackerel-agent/description
-	mackerel-agent is a piece of software which is installed
-	on your hosts to collect metrics and events and send them
-	to Mackerel where they can be visualized and monitored.
+mackerel-agent is a piece of software which is installed
+on your hosts to collect metrics and events and send them
+to Mackerel where they can be visualized and monitored.
 endef
 
 # mackerel-agent configuration files
