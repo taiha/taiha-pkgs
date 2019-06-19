@@ -126,5 +126,5 @@ endef
 # Main package
 $(eval $(call BuildPackage,mackerel-agent))
 
-include script_pl.mk
 include go_pl.mk
+include script_pl.mk
