@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 musashino205
+# Copyright (C) 2017 - 2019 musashino205
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
@@ -17,35 +17,10 @@ PKG_SOURCE_VERSION:=a8bf45548909c83d544067390dde1f4a74546682
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-SCRIPT_PLUGINS:= temp portlink appproto
+PLUGIN_VER:=0.56.0
+PLUGIN_TAR:=v$(PLUGIN_VER).tar.gz
 
 include $(INCLUDE_DIR)/package.mk
-
-define Package/mackerel-agent/Default
-  SECTION:=admin
-  CATEGORY:=Administration
-  URL:=https://mackerel.io/
-  MAINTAINER:=musashino205
-endef
-
-define Package/mackerel-agent
-  $(call Package/mackerel-agent/Default)
-  TITLE:=agent program to post your host's metrics to mackerel.io
-  DEPENDS:= +ca-certificates
-  MENU:=1
-endef
-
-define Package/mackerel-agent/description
-  mackerel-agent is a piece of software which is installed
-  on your hosts to collect metrics and events and send them
-  to Mackerel where they can be visualized and monitored.
-endef
-
-# mackerel-agent configuration files
-define Package/mackerel-agent/conffiles
-/etc/config/$(PKG_NAME).conf
-/etc/mackerel-agent/id
-endef
 
 #
 # Environment - referred to lang/golang in openwrt/packages
@@ -65,18 +40,54 @@ GO_PKG_ARM:=$(if $(findstring $(GO_PKG_ARCH),arm),$(if $(CONFIG_HAS_FPU),$(if $(
 GO_PKG_MIPS:=$(if $(filter $(GO_PKG_ARCH),mips mipsle),$(if $(CONFIG_HAS_FPU),hardfloat,softfloat),)
 
 define GoPackage/Environment
-	GOOS=$(GO_PKG_GOOS) \
-	GOARCH=$(GO_PKG_ARCH) \
-	GO386=$(GO_PKG_386) \
-	GOARM=$(GO_PKG_ARM) \
-	GOMIPS=$(GO_PKG_MIPS)
+  GOOS=$(GO_PKG_GOOS) \
+  GOARCH=$(GO_PKG_ARCH) \
+  GO386=$(GO_PKG_386) \
+  GOARM=$(GO_PKG_ARM) \
+  GOMIPS=$(GO_PKG_MIPS)
+endef
+
+define Package/mackerel-agent/Default
+  SECTION:=admin
+  CATEGORY:=Administration
+  URL:=https://mackerel.io/
+  MAINTAINER:=musashino205
+endef
+
+define Package/mackerel-agent
+  $(Package/mackerel-agent/Default)
+  TITLE:=agent program to post your host's metrics to mackerel.io
+  DEPENDS:= +ca-certificates
+  MENU:=1
+endef
+
+define Package/mackerel-agent/description
+mackerel-agent is a piece of software which is installed
+on your hosts to collect metrics and events and send them
+to Mackerel where they can be visualized and monitored.
+endef
+
+# mackerel-agent configuration files
+define Package/mackerel-agent/conffiles
+/etc/config/$(PKG_NAME).conf
+/etc/mackerel-agent/id
+endef
+
+define Build/Prepare
+	$(Build/Prepare/Default)
+	( cd "$(PKG_BUILD_DIR)" && go get -u all )
+
+	$(TAR) xvf $(DL_DIR)/$(PLUGIN_TAR) -C $(PKG_BUILD_DIR)
+
+	if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then \
+		mkdir $(PKG_BUILD_DIR)/plugins ; \
+	fi
 endef
 
 define Build/Compile
-	# required in cmdutil/cmdutil.go (exitStatus.Signaled)
-	go get -u github.com/Songmu/timeout
-
-	$(call GoPackage/Environment) make CC=gcc -C $(PKG_BUILD_DIR) build
+	$(call GoPackage/Environment) go env
+	$(call GoPackage/Environment) \
+		make CC="$(HOSTCC)" -C $(PKG_BUILD_DIR) build
 	upx --best $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
 
@@ -98,55 +109,23 @@ define Package/mackerel-agent/install
 	$(INSTALL_BIN) ./files/mackerel.init $(1)/etc/init.d/mackerel
 endef
 
-# Build/Install plugins
-define BuildPlugin
+define Package/mackerel-plugins/compile
+	go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
+		$(PKG_BUILD_DIR)/mackerel-agent-plugins-$(PLUGIN_VER)/mackerel-plugin-$(1)/main.go \
+		$(PKG_BUILD_DIR)/mackerel-agent-plugins-$(PLUGIN_VER)/mackerel-plugin-$(1)/lib/*.go
+	upx --best $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1)
+endef
 
-  define Package/mackerel-plugin-$(1)
-  $$(call Package/mackerel-agent/Default)
-    TITLE:=$(4) plugin
-    DEPENDS:= mackerel-agent $(5)
-  endef
-
-  define Package/mackerel-plugin-$(1)/compile
-	if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then \
-		mkdir $(PKG_BUILD_DIR)/plugins ; \
-	fi
-	go get -u github.com/$(2)
-	$(call GoPackage/Environment) \
-		go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-			$(GOPATH)/src/github.com/$(2)$(3)/main.go \
-			$(GOPATH)/src/github.com/$(2)$(3)/lib/*.go
-  endef
-
-  define Package/mackerel-plugin-$(1)/install
-	$(INSTALL_DIR) $$(1)/usr/sbin
-	# $(if [var],[not empty or true],[empty or false])
-	$(if $(filter $(1),$(SCRIPT_PLUGINS)),
-		$(INSTALL_BIN) ./plugins/mackerel-plugin-$(1).sh \
-			$$(1)/usr/sbin/ ,
-		$$(call Package/mackerel-plugin-$(1)/compile)
-		$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-			$$(1)/usr/sbin/
-	)
-  endef
-
-  $$(eval $$(call BuildPackage,mackerel-plugin-$(1)))
+define Package/mackerel-plugins/install
+	$(if $(filter $(1),$(SCRIPT_PLUGINS)),,$(call Package/mackerel-plugins/compile,$(1)))
+	$(INSTALL_DIR) $(2)/usr/sbin
+	$(INSTALL_BIN) \
+		$(if $(filter $(1),$(SCRIPT_PLUGINS)),./plugins/mackerel-plugin-$(1).sh,$(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1)) \
+			$(2)/usr/sbin/
 endef
 
 # Main package
 $(eval $(call BuildPackage,mackerel-agent))
 
-OFFICIAL_REPO:=mackerelio/mackerel-agent-plugins
-PREFIX:=mackerel-plugin
-# Plugin packages
-#$(eval $(call BuildPlugin,NAME(1),REPO(2),DIR(3),DESCRIPTION(4),DEPENDENCIES(5)))
-# Official plugins
-$(eval $(call BuildPlugin,conntrack,$(OFFICIAL_REPO),/$(PREFIX)-conntrack,nf_conntrack custom metrics,))
-$(eval $(call BuildPlugin,linux,$(OFFICIAL_REPO),/$(PREFIX)-linux,Get linux process metrics,+ss +coreutils +coreutils-who))
-$(eval $(call BuildPlugin,multicore,$(OFFICIAL_REPO),/$(PREFIX)-multicore,Get multicore CPU metrics,))
-$(eval $(call BuildPlugin,uptime,$(OFFICIAL_REPO),/$(PREFIX)-uptime,uptime custom metrics,))
-# Script plugins
-$(eval $(call BuildPlugin,temp,,,Get CPU/SoC temperature,))
-$(eval $(call BuildPlugin,portlink,,,Get link speed of ethernet ports,))
-$(eval $(call BuildPlugin,appproto,,,Get Bytes/Packets of application protocols,+nlbwmon))
-# Third party plugins
+include go_pl.mk
+include script_pl.mk
