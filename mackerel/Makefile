@@ -53,7 +53,7 @@ define Package/mackerel-agent/Default
 endef
 
 define Package/mackerel-agent
-  $(call Package/mackerel-agent/Default)
+  $(Package/mackerel-agent/Default)
   TITLE:=agent program to post your host's metrics to mackerel.io
   DEPENDS:= +ca-certificates
   MENU:=1
@@ -116,7 +116,7 @@ define Package/mackerel-plugins/compile
 endef
 
 define Package/mackerel-plugins/install
-	$(if $(filter $(1),$(SCRIPT_PLUGINS)),,$(call mackerel-plugins/compile,$(1)))
+	$(if $(filter $(1),$(SCRIPT_PLUGINS)),,$(call Package/mackerel-plugins/compile,$(1)))
 	$(INSTALL_DIR) $$(1)/usr/sbin
 	$(INSTALL_BIN) \
 		$(if $(filter $(1),$(SCRIPT_PLUGINS)),./plugins/mackerel-plugin-$(1).sh,$(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1)) \

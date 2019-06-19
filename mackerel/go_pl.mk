@@ -8,7 +8,7 @@ PLUGIN_VER:=0.56.0
 PLUGIN_TAR:=v$(PLUGIN_VER).tar.gz
 
 define Package/mackerel-plugin-conntrack
-$(call Package/mackerel-agent/Default)
+$(Package/mackerel-agent/Default)
   TITLE:=conntrack plugin for mackerel-agent
   DEPENDS:=mackerel-agent
 endef
@@ -18,7 +18,7 @@ nf_conntrack custom metrics
 endef
 
 define Package/mackerel-plugin-linux
-$(call Package/mackerel-agent/Default)
+$(Package/mackerel-agent/Default)
   TITLE:=linux plugin for mackerel-agent
   DEPENDS:=mackerel-agent +ss +coreutils +coreutils-who
 endef
@@ -28,7 +28,7 @@ Get linux process metrics
 endef
 
 define Package/mackerel-plugin-multicore
-$(call Package/mackerel-agent/Default)
+$(Package/mackerel-agent/Default)
   TITLE:=multicore plugin for mackerel-agent
   DEPENDS:=mackerel-agent
 endef
@@ -38,7 +38,7 @@ Get multicore CPU metrics
 endef
 
 define Package/mackerel-plugin-uptime
-$(call Package/mackerel-agent/Default)
+$(Package/mackerel-agent/Default)
   TITLE:=uptime plugin for mackerel-agent
   DEPENDS:=mackerel-agent
 endef
@@ -75,19 +75,19 @@ $(eval $(call Download,mackerel-plugin-uptime))
 
 # plugin installations
 define Package/mackerel-plugin-conntrack/install
-$(call mackerel-plugins/install,conntrack)
+$(call Package/mackerel-plugins/install,conntrack)
 endef
 
 define Package/mackerel-plugin-linux/install
-$(call mackerel-plugins/install,linux)
+$(call Package/mackerel-plugins/install,linux)
 endef
 
 define Package/mackerel-plugin-multicore/install
-$(call mackerel-plugins/install,linux)
+$(call Package/mackerel-plugins/install,linux)
 endef
 
 define Package/mackerel-plugin-uptime/install
-$(call mackerel-plugins/install,uptime)
+$(call Package/mackerel-plugins/install,uptime)
 endef
 
 # Plugin packages
