@@ -76,7 +76,7 @@ endef
 
 define Build/Prepare
 	$(Build/Prepare/Default)
-	go get -u all
+	( cd "$(PKG_BUILD_DIR)" && go get -u all )
 
 	$(TAR) xvf $(DL_DIR)/$(PLUGIN_TAR) -C $(PKG_BUILD_DIR)
 
