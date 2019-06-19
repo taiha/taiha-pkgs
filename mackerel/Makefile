@@ -76,7 +76,7 @@ define Build/Prepare
 	# required in cmdutil/cmdutil.go (exitStatus.Signaled)
 	go get -u github.com/Songmu/timeout
 
-	tar xvf $(dl_dir)/$(PLUGIN_TAR) -C $(PKG_BUILD_DIR)
+	$(TAR) xvf $(dl_dir)/$(PLUGIN_TAR) -C $(PKG_BUILD_DIR)
 
 	if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then \
 		mkdir $(PKG_BUILD_DIR)/plugins ; \
