@@ -38,15 +38,15 @@ endef
 
 # package installations
 define Package/mackerel-plugin-temp/install
-$(call Package/mackerel-plugins/install,temp)
+$(call Package/mackerel-plugins/install,temp,$(1))
 endef
 
 define Package/mackerel-plugin-portlink/install
-$(call Package/mackerel-plugins/install,portlink)
+$(call Package/mackerel-plugins/install,portlink,$(1))
 endef
 
 define Package/mackerel-plugin-appproto/install
-$(call Package/mackerel-plugins/install,appproto)
+$(call Package/mackerel-plugins/install,appproto,$(1))
 endef
 
 # Plugin packages

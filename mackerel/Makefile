@@ -121,10 +121,10 @@ endef
 
 define Package/mackerel-plugins/install
 	$(if $(filter $(1),$(SCRIPT_PLUGINS)),,$(call Package/mackerel-plugins/compile,$(1)))
-	$(INSTALL_DIR) $$(1)/usr/sbin
+	$(INSTALL_DIR) $(2)/usr/sbin
 	$(INSTALL_BIN) \
 		$(if $(filter $(1),$(SCRIPT_PLUGINS)),./plugins/mackerel-plugin-$(1).sh,$(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1)) \
-			$$(1)/usr/sbin/
+			$(2)/usr/sbin/
 endef
 
 # Main package

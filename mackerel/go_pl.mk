@@ -53,19 +53,19 @@ $(eval $(call Download,mackerel-official-plugins))
 
 # plugin installations
 define Package/mackerel-plugin-conntrack/install
-$(call Package/mackerel-plugins/install,conntrack)
+$(call Package/mackerel-plugins/install,conntrack,$(1))
 endef
 
 define Package/mackerel-plugin-linux/install
-$(call Package/mackerel-plugins/install,linux)
+$(call Package/mackerel-plugins/install,linux,$(1))
 endef
 
 define Package/mackerel-plugin-multicore/install
-$(call Package/mackerel-plugins/install,linux)
+$(call Package/mackerel-plugins/install,linux,$(1))
 endef
 
 define Package/mackerel-plugin-uptime/install
-$(call Package/mackerel-plugins/install,uptime)
+$(call Package/mackerel-plugins/install,uptime,$(1))
 endef
 
 # Plugin packages
