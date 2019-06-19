@@ -110,7 +110,7 @@ endef
 
 define Package/mackerel-plugins/compile
 	go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) \
-		$(PKG_BUILD_DIR)/mackerel-agent-plugins-$(PLUGIN_VER)/mackerel-plugin-$(1)/main.go
+		$(PKG_BUILD_DIR)/mackerel-agent-plugins-$(PLUGIN_VER)/mackerel-plugin-$(1)/main.go \
 		$(PKG_BUILD_DIR)/mackerel-agent-plugins-$(PLUGIN_VEr)/mackerel-plugin-$(1)/lib/*.go
 	upx --best $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1)
 endef
