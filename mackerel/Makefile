@@ -76,8 +76,7 @@ endef
 
 define Build/Prepare
 	$(Build/Prepare/Default)
-	# required in cmdutil/cmdutil.go (exitStatus.Signaled)
-	go get -u github.com/Songmu/timeout
+	go get -u all
 
 	$(TAR) xvf $(DL_DIR)/$(PLUGIN_TAR) -C $(PKG_BUILD_DIR)
 
