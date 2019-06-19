@@ -87,6 +87,7 @@ define Build/Prepare
 endef
 
 define Build/Compile
+	$(call GoPackage/Environment) go env
 	$(call GoPackage/Environment) \
 		make CC="$(HOSTCC)" $(HOST_MAKE_VARS) \
 			-C $(PKG_BUILD_DIR) build
