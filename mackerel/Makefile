@@ -26,12 +26,12 @@ include go_pl.mk
 # Environment - referred to lang/golang in openwrt/packages
 #
 go_arch=$(subst \
-  aarch64,arm64,$(subst \
-  i386,386,$(subst \
-  mipsel,mipsle,$(subst \
-  mips64el,mips64le,$(subst \
-  powerpc64,ppc64,$(subst \
-  x86_64,amd64,$(1)))))))
+	aarch64,arm64,$(subst \
+	i386,386,$(subst \
+	mipsel,mipsle,$(subst \
+	mips64el,mips64le,$(subst \
+	powerpc64,ppc64,$(subst \
+	x86_64,amd64,$(1)))))))
 
 GO_PKG_GOOS:=linux
 GO_PKG_ARCH:=$(call go_arch,$(ARCH))
@@ -48,23 +48,23 @@ define GoPackage/Environment
 endef
 
 define Package/mackerel-agent/Default
-  SECTION:=admin
-  CATEGORY:=Administration
-  URL:=https://mackerel.io/
-  MAINTAINER:=musashino205
+	SECTION:=admin
+	CATEGORY:=Administration
+	URL:=https://mackerel.io/
+	MAINTAINER:=musashino205
 endef
 
 define Package/mackerel-agent
-  $(call Package/mackerel-agent/Default)
-  TITLE:=agent program to post your host's metrics to mackerel.io
-  DEPENDS:= +ca-certificates
-  MENU:=1
+	$(call Package/mackerel-agent/Default)
+	TITLE:=agent program to post your host's metrics to mackerel.io
+	DEPENDS:= +ca-certificates
+	MENU:=1
 endef
 
 define Package/mackerel-agent/description
-  mackerel-agent is a piece of software which is installed
-  on your hosts to collect metrics and events and send them
-  to Mackerel where they can be visualized and monitored.
+	mackerel-agent is a piece of software which is installed
+	on your hosts to collect metrics and events and send them
+	to Mackerel where they can be visualized and monitored.
 endef
 
 # mackerel-agent configuration files
