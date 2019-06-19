@@ -73,6 +73,6 @@ endef
 
 # Plugin packages
 $(eval $(call BuildPackage,mackerel-plugin-conntrack))
-$(eval $(call BuildPackage,mackerel-plugin-linux))
+#$(eval $(call BuildPackage,mackerel-plugin-linux))
 $(eval $(call BuildPackage,mackerel-plugin-multicore))
 $(eval $(call BuildPackage,mackerel-plugin-uptime))
