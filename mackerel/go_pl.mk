@@ -23,7 +23,7 @@ $(Package/mackerel-agent/Default)
   DEPENDS:=mackerel-agent +ss +coreutils +coreutils-who
 endef
 
-define Package/mackerel-plugin-linux
+define Package/mackerel-plugin-linux/description
 Get linux process metrics
 endef
 
@@ -73,6 +73,6 @@ endef
 
 # Plugin packages
 $(eval $(call BuildPackage,mackerel-plugin-conntrack))
-#$(eval $(call BuildPackage,mackerel-plugin-linux))
+$(eval $(call BuildPackage,mackerel-plugin-linux))
 $(eval $(call BuildPackage,mackerel-plugin-multicore))
 $(eval $(call BuildPackage,mackerel-plugin-uptime))
