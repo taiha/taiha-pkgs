@@ -20,8 +20,6 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
-include script_pl.mk
-include go_pl.mk
 #
 # Environment - referred to lang/golang in openwrt/packages
 #
@@ -127,3 +125,6 @@ endef
 
 # Main package
 $(eval $(call BuildPackage,mackerel-agent))
+
+include script_pl.mk
+include go_pl.mk
