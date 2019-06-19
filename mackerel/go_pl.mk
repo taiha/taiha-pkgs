@@ -4,9 +4,6 @@
 # This is free software, licensed under the GNU General Public License v2.
 #
 
-PLUGIN_VER:=0.56.0
-PLUGIN_TAR:=v$(PLUGIN_VER).tar.gz
-
 define Package/mackerel-plugin-conntrack
 $(Package/mackerel-agent/Default)
   TITLE:=conntrack plugin for mackerel-agent

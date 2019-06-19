@@ -17,6 +17,9 @@ PKG_SOURCE_VERSION:=a8bf45548909c83d544067390dde1f4a74546682
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+PLUGIN_VER:=0.56.0
+PLUGIN_TAR:=v$(PLUGIN_VER).tar.gz
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
@@ -76,7 +79,7 @@ define Build/Prepare
 	# required in cmdutil/cmdutil.go (exitStatus.Signaled)
 	go get -u github.com/Songmu/timeout
 
-	$(TAR) xvf $(dl_dir)/$(PLUGIN_TAR) -C $(PKG_BUILD_DIR)
+	$(TAR) xvf $(DL_DIR)/$(PLUGIN_TAR) -C $(PKG_BUILD_DIR)
 
 	if [ ! -d $(PKG_BUILD_DIR)/plugins ]; then \
 		mkdir $(PKG_BUILD_DIR)/plugins ; \
