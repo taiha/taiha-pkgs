@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 musashino205
+# Copyright (C) 2017 - 2019 musashino205
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
