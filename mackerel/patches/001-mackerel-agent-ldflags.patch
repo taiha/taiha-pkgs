@@ -1,6 +1,8 @@
+diff --git a/Makefile b/Makefile
+index c5aa1f9..f75d904 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -9,7 +9,8 @@ BUILD_LDFLAGS = "\
+@@ -9,7 +9,8 @@ BUILD_LDFLAGS := "\
  	  -X main.version=$(VERSION) \
  	  -X main.gitcommit=$(CURRENT_REVISION) \
  	  -X github.com/mackerelio/mackerel-agent/config.agentName=$(MACKEREL_AGENT_NAME) \
@@ -8,5 +10,5 @@
 +	  -X github.com/mackerelio/mackerel-agent/config.apibase=$(MACKEREL_API_BASE) \
 +	  -s -w"
  
+ .PHONY: all
  all: clean test build
- 
