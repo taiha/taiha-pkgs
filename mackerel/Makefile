@@ -88,7 +88,7 @@ define Build/Compile
 	$(call GoPackage/Environment) go env
 	$(call GoPackage/Environment) \
 		make CC="$(HOSTCC)" -C $(PKG_BUILD_DIR) build
-	upx --best $(PKG_BUILD_DIR)/build/mackerel-agent
+	upx --brute $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
 
 define Package/mackerel-agent/install
