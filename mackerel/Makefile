@@ -67,6 +67,13 @@ on your hosts to collect metrics and events and send them
 to Mackerel where they can be visualized and monitored.
 endef
 
+define Package/mackerel-agent/config
+	config PACKAGE_MACKEREL_MAX_COMPRESSION
+	bool "Enable maximum compression by upx for the devices with small flash (<= 8 MiB)"
+	default n
+	depends on PACKAGE_mackerel-agent
+endef
+
 # mackerel-agent configuration files
 define Package/mackerel-agent/conffiles
 /etc/config/$(PKG_NAME).conf
@@ -84,11 +91,17 @@ define Build/Prepare
 	fi
 endef
 
+ifneq ($(CONFIG_PACKAGE_MACKEREL_MAX_COMPRESSION),)
+COMPRESSION_PARAM:=--brute
+else
+COMPRESSION_PARAM:=-7
+endif
+
 define Build/Compile
 	$(call GoPackage/Environment) go env
 	$(call GoPackage/Environment) \
 		make CC="$(HOSTCC)" -C $(PKG_BUILD_DIR) build
-	upx --brute $(PKG_BUILD_DIR)/build/mackerel-agent
+	upx $(COMPRESSION_PARAM) $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
 
 define Package/mackerel-agent/install
