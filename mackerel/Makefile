@@ -58,7 +58,6 @@ define Package/mackerel-agent
   $(Package/mackerel-agent/Default)
   TITLE:=agent program to post your host's metrics to mackerel.io
   DEPENDS:= +ca-certificates
-  MENU:=1
 endef
 
 define Package/mackerel-agent/description
