@@ -1,0 +1,47 @@
+From 3c0058ba2a29f17952c7520c010a26f126bd5d6b Mon Sep 17 00:00:00 2001
+From: INAGAKI Hiroshi <musashino.open@gmail.com>
+Date: Sun, 23 Jun 2019 01:50:35 +0900
+Subject: [PATCH 5/8] filesystem: remove darwin-related code
+
+---
+ util/filesystem.go | 17 -----------------
+ 1 file changed, 17 deletions(-)
+
+diff --git a/util/filesystem.go b/util/filesystem.go
+index 2ceed39..89da9ad 100644
+--- a/util/filesystem.go
++++ b/util/filesystem.go
+@@ -9,7 +9,6 @@ import (
+ 	"fmt"
+ 	"os/exec"
+ 	"regexp"
+-	"runtime"
+ 	"strconv"
+ 	"strings"
+ 	"time"
+@@ -104,22 +103,6 @@ func parseDfLines(out string) []*DfStat {
+ 			continue
+ 		}
+ 
+-		if runtime.GOOS == "darwin" {
+-			if strings.HasPrefix(dfstat.Mounted, "/Volumes/") {
+-				continue
+-			}
+-			// Skip APFS vm partition, add its usage to the root filesystem.
+-			if dfstat.Mounted == "/private/var/vm" {
+-				for _, fs := range filesystems {
+-					if fs.Mounted == "/" {
+-						fs.Used += dfstat.Used
+-						break
+-					}
+-				}
+-				continue
+-			}
+-		}
+-
+ 		filesystems = append(filesystems, dfstat)
+ 	}
+ 	return filesystems
+-- 
+2.17.1.windows.2
+

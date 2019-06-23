@@ -1,0 +1,848 @@
+From 6608c9dad5832528c13adea1d82ee8dd27ed9792 Mon Sep 17 00:00:00 2001
+From: INAGAKI Hiroshi <musashino.open@gmail.com>
+Date: Sun, 23 Jun 2019 04:07:25 +0900
+Subject: [PATCH 8/8] general: drop cloud-related code/files
+
+---
+ command/command.go       |  33 ----
+ config/config.go         |  53 ------
+ spec/cloud.go            | 398 ---------------------------------------
+ spec/isec2.go            |  33 ----
+ spec/isec2_linux.go      |  97 ----------
+ spec/isec2_linux_test.go | 129 -------------
+ 6 files changed, 743 deletions(-)
+ delete mode 100644 spec/cloud.go
+ delete mode 100644 spec/isec2.go
+ delete mode 100644 spec/isec2_linux.go
+ delete mode 100644 spec/isec2_linux_test.go
+
+diff --git a/command/command.go b/command/command.go
+index 60d05b3..41a4c0a 100644
+--- a/command/command.go
++++ b/command/command.go
+@@ -145,20 +145,6 @@ func prepareHost(conf *config.Config, ameta *AgentMeta, api *mackerel.API) (*mkr
+ 	return result, nil
+ }
+ 
+-// prepareCustomIdentiferHosts collects the host information based on the
+-// configuration of the custom_identifier fields.
+-func prepareCustomIdentiferHosts(conf *config.Config, api *mackerel.API) map[string]*mkr.Host {
+-	customIdentifierHosts := make(map[string]*mkr.Host)
+-	for _, customIdentifier := range conf.ListCustomIdentifiers() {
+-		host, err := api.FindHostByCustomIdentifier(customIdentifier)
+-		if err != nil {
+-			logger.Warningf("Failed to retrieve the host of custom_identifier: %s, %s", customIdentifier, err)
+-			continue
+-		}
+-		customIdentifierHosts[customIdentifier] = host
+-	}
+-	return customIdentifierHosts
+-}
+ 
+ // Interval between each updating host specs.
+ var specsUpdateInterval = 1 * time.Hour
+@@ -174,7 +160,6 @@ type App struct {
+ 	Config                *config.Config
+ 	Host                  *mkr.Host
+ 	API                   *mackerel.API
+-	CustomIdentifierHosts map[string]*mkr.Host
+ 	AgentMeta             *AgentMeta
+ }
+ 
+@@ -376,13 +361,6 @@ func enqueueLoop(app *App, postQueue chan *postValue, quit chan struct{}) {
+ 			var creatingValues []*mkr.HostMetricValue
+ 			for _, values := range result.Values {
+ 				hostID := app.Host.ID
+-				if values.CustomIdentifier != nil {
+-					if host, ok := app.CustomIdentifierHosts[*values.CustomIdentifier]; ok {
+-						hostID = host.ID
+-					} else {
+-						continue
+-					}
+-				}
+ 				for name, value := range values.Values {
+ 					if math.IsNaN(value) || math.IsInf(value, 0) {
+ 						logger.Warningf("Invalid value: hostID = %s, name = %s, value = %f\n is not sent.", hostID, name, value)
+@@ -560,19 +538,9 @@ func collectHostParam(conf *config.Config, ameta *AgentMeta) (*mkr.CreateHostPar
+ 	}
+ 
+ 	specGens := specGenerators()
+-	cGen := spec.SuggestCloudGenerator(conf)
+-	if cGen != nil {
+-		specGens = append(specGens, cGen)
+-	}
+ 	meta := spec.Collect(specGens)
+ 
+ 	var customIdentifier string
+-	if cGen != nil {
+-		customIdentifier, err = cGen.SuggestCustomIdentifier()
+-		if err != nil {
+-			logger.Warningf("Error while suggesting custom identifier. err: %s", err.Error())
+-		}
+-	}
+ 
+ 	interfaces, err := interfaceGenerator().Generate()
+ 	if err != nil {
+@@ -656,7 +624,6 @@ func Prepare(conf *config.Config, ameta *AgentMeta) (*App, error) {
+ 		Config:                conf,
+ 		Host:                  host,
+ 		API:                   api,
+-		CustomIdentifierHosts: prepareCustomIdentiferHosts(conf, api),
+ 		AgentMeta:             ameta,
+ 	}, nil
+ }
+diff --git a/config/config.go b/config/config.go
+index 90f0a42..82a9cf8 100644
+--- a/config/config.go
++++ b/config/config.go
+@@ -40,58 +40,6 @@ func getAgentName() string {
+ // DefaultConfig stores standard settings for each environment
+ var DefaultConfig *Config
+ 
+-// CloudPlatform is an enum to represent which cloud platform the host is running on.
+-type CloudPlatform int
+-
+-// CloudPlatform enum values
+-const (
+-	CloudPlatformAuto CloudPlatform = iota
+-	CloudPlatformNone
+-	CloudPlatformEC2
+-	CloudPlatformGCE
+-	CloudPlatformAzureVM
+-)
+-
+-func (c CloudPlatform) String() string {
+-	switch c {
+-	case CloudPlatformAuto:
+-		return "auto"
+-	case CloudPlatformNone:
+-		return "none"
+-	case CloudPlatformEC2:
+-		return "ec2"
+-	case CloudPlatformGCE:
+-		return "gce"
+-	case CloudPlatformAzureVM:
+-		return "azurevm"
+-	}
+-	return ""
+-}
+-
+-// UnmarshalText is used by toml unmarshaller
+-func (c *CloudPlatform) UnmarshalText(text []byte) error {
+-	switch string(text) {
+-	case "auto", "":
+-		*c = CloudPlatformAuto
+-		return nil
+-	case "none":
+-		*c = CloudPlatformNone
+-		return nil
+-	case "ec2":
+-		*c = CloudPlatformEC2
+-		return nil
+-	case "gce":
+-		*c = CloudPlatformGCE
+-		return nil
+-	case "azurevm":
+-		*c = CloudPlatformAzureVM
+-		return nil
+-	default:
+-		*c = CloudPlatformNone // Avoid panic
+-		return fmt.Errorf("failed to parse")
+-	}
+-}
+-
+ // Config represents mackerel-agent's configuration file.
+ type Config struct {
+ 	Apibase       string
+@@ -107,7 +55,6 @@ type Config struct {
+ 	HostStatus    HostStatus    `toml:"host_status"`
+ 	Filesystems   Filesystems   `toml:"filesystems"`
+ 	HTTPProxy     string        `toml:"http_proxy"`
+-	CloudPlatform CloudPlatform `toml:"cloud_platform"`
+ 
+ 	// This Plugin field is used to decode the toml file. After reading the
+ 	// configuration from file, this field is set to nil.
+diff --git a/spec/cloud.go b/spec/cloud.go
+deleted file mode 100644
+index f7713dc..0000000
+--- a/spec/cloud.go
++++ /dev/null
+@@ -1,398 +0,0 @@
+-package spec
+-
+-import (
+-	"context"
+-	"encoding/json"
+-	"fmt"
+-	"io/ioutil"
+-	"net/http"
+-	"net/url"
+-	"strings"
+-	"sync"
+-	"time"
+-
+-	"github.com/Songmu/retry"
+-	"github.com/mackerelio/golib/logging"
+-	"github.com/mackerelio/mackerel-client-go"
+-
+-	"github.com/mackerelio/mackerel-agent/config"
+-)
+-
+-// This Generator collects metadata about cloud instances.
+-// Currently EC2 and GCE are supported.
+-// EC2: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
+-// GCE: https://developers.google.com/compute/docs/metadata
+-// AzureVM: https://docs.microsoft.com/azure/virtual-machines/virtual-machines-instancemetadataservice-overview
+-
+-// CloudGenerator definition
+-type CloudGenerator struct {
+-	CloudMetaGenerator
+-}
+-
+-// CloudMetaGenerator interface of metadata generator for each cloud platform
+-type CloudMetaGenerator interface {
+-	Generate() (interface{}, error)
+-	SuggestCustomIdentifier() (string, error)
+-}
+-
+-var cloudLogger = logging.GetLogger("spec.cloud")
+-
+-var ec2BaseURL, gceMetaURL, azureVMBaseURL *url.URL
+-
+-func init() {
+-	ec2BaseURL, _ = url.Parse("http://169.254.169.254/latest/meta-data")
+-	gceMetaURL, _ = url.Parse("http://metadata.google.internal./computeMetadata/v1/?recursive=true")
+-	azureVMBaseURL, _ = url.Parse("http://169.254.169.254/metadata/instance")
+-}
+-
+-var timeout = 3 * time.Second
+-
+-// SuggestCloudGenerator returns suitable CloudGenerator
+-func SuggestCloudGenerator(conf *config.Config) *CloudGenerator {
+-	// if CloudPlatform is specified, return corresponding one
+-	switch conf.CloudPlatform {
+-	case config.CloudPlatformNone:
+-		return nil
+-	case config.CloudPlatformEC2:
+-		return &CloudGenerator{&EC2Generator{ec2BaseURL}}
+-	case config.CloudPlatformGCE:
+-		return &CloudGenerator{&GCEGenerator{gceMetaURL}}
+-	case config.CloudPlatformAzureVM:
+-		return &CloudGenerator{&AzureVMGenerator{azureVMBaseURL}}
+-	}
+-
+-	var wg sync.WaitGroup
+-	gCh := make(chan *CloudGenerator, 3)
+-
+-	// cancelable context
+-	ctx, cancel := context.WithCancel(context.Background())
+-
+-	wg.Add(3)
+-	go func() {
+-		if isEC2(ctx) {
+-			gCh <- &CloudGenerator{&EC2Generator{ec2BaseURL}}
+-			cancel()
+-		}
+-		wg.Done()
+-	}()
+-	go func() {
+-		if isGCE(ctx) {
+-			gCh <- &CloudGenerator{&GCEGenerator{gceMetaURL}}
+-			cancel()
+-		}
+-		wg.Done()
+-	}()
+-	go func() {
+-		if isAzure(ctx) {
+-			gCh <- &CloudGenerator{&AzureVMGenerator{azureVMBaseURL}}
+-			cancel()
+-		}
+-		wg.Done()
+-	}()
+-
+-	go func() {
+-		wg.Wait()
+-		// close so that `<-gCh` will receive nul
+-		close(gCh)
+-	}()
+-
+-	return <-gCh
+-}
+-
+-func httpCli() *http.Client {
+-	return &http.Client{
+-		Timeout: timeout,
+-		Transport: &http.Transport{
+-			// don't use HTTP_PROXY when requesting cloud instance metadata APIs
+-			Proxy: nil,
+-		},
+-	}
+-}
+-
+-func isGCE(ctx context.Context) bool {
+-	err := retry.WithContext(ctx, 2, 2*time.Second, func() error {
+-		_, err := requestGCEMeta(ctx)
+-		return err
+-	})
+-	return err == nil
+-}
+-
+-// Note: May want to check without using the API.
+-func isAzure(ctx context.Context) bool {
+-	isAzure := false
+-	err := retry.WithContext(ctx, 2, 2*time.Second, func() error {
+-		cl := httpCli()
+-		// '/vmId` is probably Azure VM specific URL
+-		req, err := http.NewRequest("GET", azureVMBaseURL.String()+"/compute/vmId?api-version=2017-04-02&format=text", nil)
+-		if err != nil {
+-			return err
+-		}
+-		req.Header.Set("Metadata", "true")
+-
+-		resp, err := cl.Do(req.WithContext(ctx))
+-		if err != nil {
+-			return err
+-		}
+-		defer resp.Body.Close()
+-		isAzure = resp.StatusCode == 200
+-		return nil
+-	})
+-	return err == nil && isAzure
+-}
+-
+-func requestGCEMeta(ctx context.Context) ([]byte, error) {
+-	cl := httpCli()
+-	req, err := http.NewRequest("GET", gceMetaURL.String(), nil)
+-	if err != nil {
+-		return nil, err
+-	}
+-	req.Header.Set("Metadata-Flavor", "Google")
+-
+-	resp, err := cl.Do(req.WithContext(ctx))
+-	if err != nil {
+-		return nil, err
+-	}
+-	defer resp.Body.Close()
+-
+-	if resp.StatusCode != 200 {
+-		return nil, fmt.Errorf("failed to request gce meta. response code: %d", resp.StatusCode)
+-	}
+-	return ioutil.ReadAll(resp.Body)
+-}
+-
+-// EC2Generator meta generator for EC2
+-type EC2Generator struct {
+-	baseURL *url.URL
+-}
+-
+-// Generate collects metadata from cloud platform.
+-func (g *EC2Generator) Generate() (interface{}, error) {
+-	cl := httpCli()
+-
+-	metadataKeys := []string{
+-		"instance-id",
+-		"instance-type",
+-		"placement/availability-zone",
+-		"security-groups",
+-		"ami-id",
+-		"hostname",
+-		"local-hostname",
+-		"public-hostname",
+-		"local-ipv4",
+-		"public-ipv4",
+-		"reservation-id",
+-	}
+-
+-	metadata := make(map[string]string)
+-
+-	for _, key := range metadataKeys {
+-		resp, err := cl.Get(g.baseURL.String() + "/" + key)
+-		if err != nil {
+-			cloudLogger.Debugf("This host may not be running on EC2. Error while reading '%s'", key)
+-			return nil, nil
+-		}
+-		defer resp.Body.Close()
+-		if resp.StatusCode == 200 {
+-			body, err := ioutil.ReadAll(resp.Body)
+-			if err != nil {
+-				cloudLogger.Errorf("Results of requesting metadata cannot be read: '%s'", err)
+-				break
+-			}
+-			metadata[key] = string(body)
+-			cloudLogger.Debugf("results %s:%s", key, string(body))
+-		} else {
+-			cloudLogger.Debugf("Status code of the result of requesting metadata '%s' is '%d'", key, resp.StatusCode)
+-		}
+-	}
+-
+-	return &mackerel.Cloud{Provider: "ec2", MetaData: metadata}, nil
+-}
+-
+-// SuggestCustomIdentifier suggests the identifier of the EC2 instance
+-func (g *EC2Generator) SuggestCustomIdentifier() (string, error) {
+-	identifier := ""
+-	err := retry.Retry(3, 2*time.Second, func() error {
+-		cl := httpCli()
+-		key := "instance-id"
+-		resp, err := cl.Get(g.baseURL.String() + "/" + key)
+-		if err != nil {
+-			return fmt.Errorf("error while retrieving instance-id")
+-		}
+-		defer resp.Body.Close()
+-		if resp.StatusCode != 200 {
+-			return fmt.Errorf("failed to request instance-id. response code: %d", resp.StatusCode)
+-		}
+-		body, err := ioutil.ReadAll(resp.Body)
+-		if err != nil {
+-			return fmt.Errorf("results of requesting instance-id cannot be read: '%s'", err)
+-		}
+-		instanceID := string(body)
+-		if instanceID == "" {
+-			return fmt.Errorf("invalid instance id")
+-		}
+-		identifier = instanceID + ".ec2.amazonaws.com"
+-		return nil
+-	})
+-	return identifier, err
+-}
+-
+-// GCEGenerator generate for GCE
+-type GCEGenerator struct {
+-	metaURL *url.URL
+-}
+-
+-// Generate collects metadata from cloud platform.
+-func (g *GCEGenerator) Generate() (interface{}, error) {
+-	bytes, err := requestGCEMeta(context.Background())
+-	if err != nil {
+-		return nil, err
+-	}
+-	var data gceMeta
+-	json.Unmarshal(bytes, &data)
+-	return data.toGeneratorResults(), nil
+-}
+-
+-type gceInstance struct {
+-	Zone         string
+-	InstanceType string `json:"machineType"`
+-	Hostname     string
+-	InstanceID   uint64 `json:"id"`
+-}
+-
+-type gceProject struct {
+-	ProjectID        string
+-	NumericProjectID uint64
+-}
+-
+-type gceMeta struct {
+-	Instance *gceInstance
+-	Project  *gceProject
+-}
+-
+-func (g gceMeta) toGeneratorMeta() map[string]string {
+-	meta := make(map[string]string)
+-
+-	lastS := func(s string) string {
+-		ss := strings.Split(s, "/")
+-		return ss[len(ss)-1]
+-	}
+-
+-	if ins := g.Instance; ins != nil {
+-		meta["hostname"] = ins.Hostname
+-		meta["instance-id"] = fmt.Sprint(ins.InstanceID)
+-		meta["instance-type"] = lastS(ins.InstanceType)
+-		meta["zone"] = lastS(ins.Zone)
+-	}
+-
+-	if proj := g.Project; proj != nil {
+-		meta["projectId"] = proj.ProjectID
+-	}
+-
+-	return meta
+-}
+-
+-func (g gceMeta) toGeneratorResults() *mackerel.Cloud {
+-	return &mackerel.Cloud{Provider: "gce", MetaData: g.toGeneratorMeta()}
+-}
+-
+-// SuggestCustomIdentifier for GCE is not implemented yet
+-func (g *GCEGenerator) SuggestCustomIdentifier() (string, error) {
+-	return "", nil
+-}
+-
+-// AzureVMGenerator meta generator for Azure VM
+-type AzureVMGenerator struct {
+-	baseURL *url.URL
+-}
+-
+-// Generate collects metadata from cloud platform.
+-func (g *AzureVMGenerator) Generate() (interface{}, error) {
+-	metadataComputeKeys := map[string]string{
+-		"location":  "location",
+-		"offer":     "imageReferenceOffer",
+-		"osType":    "osSystemType",
+-		"publisher": "imageReferencePublisher",
+-		"sku":       "imageReferenceSku",
+-		"vmId":      "vmID",
+-		"vmSize":    "virtualMachineSizeType",
+-	}
+-
+-	ipAddressKeys := map[string]string{
+-		"privateIpAddress": "privateIpAddress",
+-		"publicIpAddress":  "publicIpAddress",
+-	}
+-
+-	metadata := make(map[string]string)
+-	metadata = retrieveAzureVMMetadata(metadata, g.baseURL.String(), "/compute/", metadataComputeKeys)
+-	metadata = retrieveAzureVMMetadata(metadata, g.baseURL.String(), "/network/interface/0/ipv4/ipAddress/0/", ipAddressKeys)
+-
+-	return &mackerel.Cloud{Provider: "AzureVM", MetaData: metadata}, nil
+-}
+-
+-func retrieveAzureVMMetadata(metadataMap map[string]string, baseURL string, urlSuffix string, keys map[string]string) map[string]string {
+-	cl := httpCli()
+-
+-	for key, value := range keys {
+-		req, err := http.NewRequest("GET", baseURL+urlSuffix+key+"?api-version=2017-04-02&format=text", nil)
+-		if err != nil {
+-			cloudLogger.Debugf("This host may not be running on Azure VM. Error while reading '%s'", key)
+-			return metadataMap
+-		}
+-
+-		req.Header.Set("Metadata", "true")
+-
+-		resp, err := cl.Do(req)
+-		if err != nil {
+-			cloudLogger.Debugf("This host may not be running on Azure VM. Error while reading '%s'", key)
+-			return metadataMap
+-		}
+-		defer resp.Body.Close()
+-
+-		if resp.StatusCode == 200 {
+-			body, err := ioutil.ReadAll(resp.Body)
+-			if err != nil {
+-				cloudLogger.Errorf("Results of requesting metadata cannot be read: '%s'", err)
+-				break
+-			}
+-			metadataMap[value] = string(body)
+-			cloudLogger.Debugf("results %s:%s", key, string(body))
+-		} else {
+-			cloudLogger.Debugf("Status code of the result of requesting metadata '%s' is '%d'", key, resp.StatusCode)
+-		}
+-	}
+-	return metadataMap
+-}
+-
+-// SuggestCustomIdentifier suggests the identifier of the Azure VM instance
+-func (g *AzureVMGenerator) SuggestCustomIdentifier() (string, error) {
+-	identifier := ""
+-	err := retry.Retry(3, 2*time.Second, func() error {
+-		cl := httpCli()
+-		req, err := http.NewRequest("GET", azureVMBaseURL.String()+"/compute/vmId?api-version=2017-04-02&format=text", nil)
+-		if err != nil {
+-			return fmt.Errorf("error while retrieving vmId")
+-		}
+-		req.Header.Set("Metadata", "true")
+-
+-		resp, err := cl.Do(req)
+-		if err != nil {
+-			return fmt.Errorf("error while retrieving vmId")
+-		}
+-		defer resp.Body.Close()
+-
+-		if resp.StatusCode != 200 {
+-			return fmt.Errorf("failed to request vmId. response code: %d", resp.StatusCode)
+-		}
+-		body, err := ioutil.ReadAll(resp.Body)
+-		if err != nil {
+-			return fmt.Errorf("results of requesting vmId cannot be read: '%s'", err)
+-		}
+-		instanceID := string(body)
+-		if instanceID == "" {
+-			return fmt.Errorf("invalid instance id")
+-		}
+-		identifier = instanceID + ".virtual_machine.azure.microsoft.com"
+-		return nil
+-	})
+-	return identifier, err
+-}
+diff --git a/spec/isec2.go b/spec/isec2.go
+deleted file mode 100644
+index b3d93b7..0000000
+--- a/spec/isec2.go
++++ /dev/null
+@@ -1,33 +0,0 @@
+-// +build !linux,!windows
+-
+-package spec
+-
+-import (
+-	"context"
+-	"net/http"
+-	"time"
+-
+-	"github.com/Songmu/retry"
+-)
+-
+-// For instances other than Linux, retry only 1 times to shorten whole process
+-func isEC2(ctx context.Context) bool {
+-	isEC2 := false
+-	err := retry.WithContext(ctx, 2, 2*time.Second, func() error {
+-		cl := httpCli()
+-		// '/ami-id` is probably an AWS specific URL
+-		req, err := http.NewRequest("GET", ec2BaseURL.String()+"/ami-id", nil)
+-		if err != nil {
+-			return err
+-		}
+-		resp, err := cl.Do(req.WithContext(ctx))
+-		if err != nil {
+-			return err
+-		}
+-		defer resp.Body.Close()
+-
+-		isEC2 = resp.StatusCode == 200
+-		return nil
+-	})
+-	return err == nil && isEC2
+-}
+diff --git a/spec/isec2_linux.go b/spec/isec2_linux.go
+deleted file mode 100644
+index a61e848..0000000
+--- a/spec/isec2_linux.go
++++ /dev/null
+@@ -1,97 +0,0 @@
+-package spec
+-
+-import (
+-	"bytes"
+-	"context"
+-	"encoding/binary"
+-	"encoding/hex"
+-	"fmt"
+-	"io/ioutil"
+-	"net/http"
+-	"strings"
+-	"time"
+-
+-	"github.com/Songmu/retry"
+-)
+-
+-// If the OS is Linux, check /sys/hypervisor/uuid and /sys/devices/virtual/dmi/id/product_uuid files first. If UUID seems to be EC2-ish, call the metadata API (up to 3 times).
+-// ref. https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
+-func isEC2(ctx context.Context) bool {
+-	var uuidFiles = []string{
+-		"/sys/hypervisor/uuid",
+-		"/sys/devices/virtual/dmi/id/product_uuid",
+-	}
+-
+-	return isEC2WithSpecifiedUUIDFiles(ctx, uuidFiles)
+-}
+-
+-func isEC2WithSpecifiedUUIDFiles(ctx context.Context, uuidFiles []string) bool {
+-	looksLikeEC2 := false
+-	for _, u := range uuidFiles {
+-		data, err := ioutil.ReadFile(u)
+-		if err != nil {
+-			continue
+-		}
+-		if isEC2UUID(string(data)) {
+-			looksLikeEC2 = true
+-			break
+-		}
+-	}
+-	if !looksLikeEC2 {
+-		return false
+-	}
+-
+-	// give up if ctx already closed
+-	select {
+-	case <-ctx.Done():
+-		return false
+-	default:
+-	}
+-
+-	res := false
+-	cl := httpCli()
+-	err := retry.WithContext(ctx, 3, 2*time.Second, func() error {
+-		// '/ami-id` is probably an AWS specific URL
+-		req, err := http.NewRequest("GET", ec2BaseURL.String()+"/ami-id", nil)
+-		if err != nil {
+-			return nil // something wrong. give up
+-		}
+-		resp, err := cl.Do(req.WithContext(ctx))
+-		if err != nil {
+-			return err
+-		}
+-		defer resp.Body.Close()
+-
+-		res = resp.StatusCode == 200
+-		return nil
+-	})
+-
+-	if err == nil {
+-		return res
+-	}
+-
+-	return false
+-}
+-
+-func isEC2UUID(uuid string) bool {
+-	conds := func(uuid string) bool {
+-		if strings.HasPrefix(uuid, "ec2") || strings.HasPrefix(uuid, "EC2") {
+-			return true
+-		}
+-		return false
+-	}
+-
+-	if conds(uuid) {
+-		return true
+-	}
+-
+-	// Check as little endian.
+-	// see. https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
+-	fields := strings.Split(uuid, "-")
+-	decoded, _ := hex.DecodeString(fields[0]) // fields[0]: UUID time_low(uint32)
+-	r := bytes.NewReader(decoded)
+-	var data uint32
+-	binary.Read(r, binary.LittleEndian, &data)
+-
+-	return conds(fmt.Sprintf("%x", data))
+-}
+diff --git a/spec/isec2_linux_test.go b/spec/isec2_linux_test.go
+deleted file mode 100644
+index 152c3c4..0000000
+--- a/spec/isec2_linux_test.go
++++ /dev/null
+@@ -1,129 +0,0 @@
+-package spec
+-
+-import (
+-	"context"
+-	"io/ioutil"
+-	"net/http"
+-	"net/http/httptest"
+-	"net/url"
+-	"os"
+-	"testing"
+-)
+-
+-func setEc2BaseURL(url *url.URL) func() {
+-	oldEC2BaseURL := ec2BaseURL
+-	ec2BaseURL = url
+-	return func() {
+-		ec2BaseURL = oldEC2BaseURL // restore value
+-	}
+-}
+-
+-func TestIsEC2UUID(t *testing.T) {
+-	tests := []struct {
+-		uuid   string
+-		expect bool
+-	}{
+-		{"ec2e1916-9099-7caf-fd21-01234abcdef", true},
+-		{"EC2E1916-9099-7CAF-FD21-01234ABCDEF", true},
+-		{"45e12aec-dcd1-b213-94ed-01234abcdef", true}, // litte endian
+-		{"45E12AEC-DCD1-B213-94ED-01234ABCDEF", true}, // litte endian
+-		{"abcd1916-9099-7caf-fd21-01234abcdef", false},
+-		{"ABCD1916-9099-7CAF-FD21-01234ABCDEF", false},
+-		{"", false},
+-	}
+-
+-	for _, tc := range tests {
+-		if isEC2UUID(tc.uuid) != tc.expect {
+-			t.Errorf("isEC2() should be %v: %q", tc.expect, tc.uuid)
+-		}
+-	}
+-}
+-
+-func TestIsEC2(t *testing.T) {
+-	tests := []struct {
+-		existsUUIDFiles [2]bool // [0]: as `/sys/hypervisor/uuid`, [1]: as `/sys/devices/virtual/dmi/id/product_uuid`
+-		existsAMIId     bool
+-		expect          bool
+-	}{
+-		{
+-			existsUUIDFiles: [2]bool{
+-				true,
+-				true,
+-			},
+-			existsAMIId: true,
+-			expect:      true,
+-		},
+-		{
+-			existsUUIDFiles: [2]bool{
+-				false,
+-				true,
+-			},
+-			existsAMIId: true,
+-			expect:      true,
+-		},
+-		{
+-			existsUUIDFiles: [2]bool{
+-				true,
+-				false,
+-			},
+-			existsAMIId: true,
+-			expect:      true,
+-		},
+-		{
+-			existsUUIDFiles: [2]bool{
+-				false,
+-				false,
+-			},
+-			existsAMIId: true,
+-			expect:      false,
+-		},
+-		{
+-			existsUUIDFiles: [2]bool{
+-				true,
+-				true,
+-			},
+-			existsAMIId: false,
+-			expect:      false,
+-		},
+-	}
+-
+-	for _, tc := range tests {
+-		func() {
+-			handler := func(res http.ResponseWriter, req *http.Request) {
+-				if !tc.existsAMIId {
+-					res.WriteHeader(http.StatusNotFound)
+-				}
+-			}
+-			ts := httptest.NewServer(http.HandlerFunc(handler))
+-			defer func() { ts.Close() }()
+-
+-			u, _ := url.Parse(ts.URL)
+-			defer setEc2BaseURL(u)()
+-
+-			uuidFiles := make([]string, 0, 2)
+-			for _, exist := range tc.existsUUIDFiles {
+-				tf, err := ioutil.TempFile("", "")
+-				if err != nil {
+-					t.Errorf("should not raise error: %s", err)
+-				}
+-
+-				tn := tf.Name()
+-				uuidFiles = append(uuidFiles, tn)
+-
+-				if exist {
+-					defer os.Remove(tn)
+-				} else {
+-					os.Remove(tn)
+-					continue
+-				}
+-
+-				tf.Write([]byte("ec2e1916-9099-7caf-fd21-012345abcdef")) // valid EC2 UUID
+-				tf.Close()
+-			}
+-
+-			if isEC2WithSpecifiedUUIDFiles(context.Background(), uuidFiles) != tc.expect {
+-				t.Errorf("isEC2() should be %v: %#v", tc.expect, tc)
+-			}
+-		}()
+-	}
+-}
+-- 
+2.17.1.windows.2
+

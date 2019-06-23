@@ -1,0 +1,26 @@
+From c07c2cdc28d05631ebfc1b5a77f361e02303e572 Mon Sep 17 00:00:00 2001
+From: INAGAKI Hiroshi <musashino.open@gmail.com>
+Date: Sun, 23 Jun 2019 01:45:14 +0900
+Subject: [PATCH 4/8] commands: remove Windows-related code
+
+---
+ commands.go | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/commands.go b/commands.go
+index 5840a55..5e0b51a 100644
+--- a/commands.go
++++ b/commands.go
+@@ -62,9 +62,6 @@ func doInit(fs *flag.FlagSet, argv []string) error {
+ run as supervisor mode enabling configuration reloading and crash recovery
+ */
+ func doSupervise(fs *flag.FlagSet, argv []string) error {
+-	if runtime.GOOS == "windows" {
+-		return fmt.Errorf("supervise mode is not supported on windows")
+-	}
+ 	copiedArgv := make([]string, len(argv))
+ 	copy(copiedArgv, argv)
+ 	conf, err := resolveConfig(fs, argv)
+-- 
+2.17.1.windows.2
+

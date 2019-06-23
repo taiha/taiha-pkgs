@@ -1,3 +1,13 @@
+From b25375c07fa4f65137f40ff5f97f25ec0e6d3867 Mon Sep 17 00:00:00 2001
+From: INAGAKI Hiroshi <musashino.open@gmail.com>
+Date: Tue, 12 Sep 2017 14:01:33 +0900
+Subject: [PATCH 1/8] make: Add options to BUILD_LDFLAGS
+
+Signed-off-by: INAGAKI Hiroshi <musashino.open@gmail.com>
+---
+ Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
 diff --git a/Makefile b/Makefile
 index c5aa1f9..f75d904 100644
 --- a/Makefile
@@ -12,3 +22,6 @@ index c5aa1f9..f75d904 100644
  
  .PHONY: all
  all: clean test build
+-- 
+2.17.1.windows.2
+

@@ -1,0 +1,38 @@
+From 885a3d553e4cf13a69173419640f4aef0e634537 Mon Sep 17 00:00:00 2001
+From: INAGAKI Hiroshi <musashino.open@gmail.com>
+Date: Sun, 23 Jun 2019 02:39:46 +0900
+Subject: [PATCH 7/8] filesystem: use "-k" by default for df
+
+---
+ util/filesystem.go | 15 +--------------
+ 1 file changed, 1 insertion(+), 14 deletions(-)
+
+diff --git a/util/filesystem.go b/util/filesystem.go
+index 89da9ad..e55f455 100644
+--- a/util/filesystem.go
++++ b/util/filesystem.go
+@@ -42,20 +42,7 @@ var dfHeaderPattern = regexp.MustCompile(
+ 
+ var logger = logging.GetLogger("util.filesystem")
+ 
+-var dfOpt = "-Pkl"
+-
+-func init() {
+-	// Some `df` command such as busybox does not have `-P` or `-l` option.
+-	tio := &timeout.Timeout{
+-		Cmd:       exec.Command("df", dfOpt),
+-		Duration:  3 * time.Second,
+-		KillAfter: 1 * time.Second,
+-	}
+-	exitSt, _, stderr, err := tio.Run()
+-	if err == nil && exitSt.Code != 0 && (strings.Contains(stderr, "df: invalid option -- ") || strings.Contains(stderr, "df: unrecognized option: ")) {
+-		dfOpt = "-k"
+-	}
+-}
++var dfOpt = "-k"
+ 
+ // CollectDfValues collects disk free statistics from df command
+ func CollectDfValues() ([]*DfStat, error) {
+-- 
+2.17.1.windows.2
+
