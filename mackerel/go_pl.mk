@@ -6,7 +6,7 @@
 
 define Package/mackerel-plugin-conntrack
 $(Package/mackerel-agent/Default)
-  TITLE:=conntrack plugin for mackerel-agent
+  TITLE:=conntrack plugin for mackerel-agent (official)
   DEPENDS:=mackerel-agent
 endef
 
@@ -16,7 +16,7 @@ endef
 
 define Package/mackerel-plugin-linux
 $(Package/mackerel-agent/Default)
-  TITLE:=linux plugin for mackerel-agent
+  TITLE:=linux plugin for mackerel-agent (official)
   DEPENDS:=mackerel-agent +ss +coreutils +coreutils-who
 endef
 
@@ -26,7 +26,7 @@ endef
 
 define Package/mackerel-plugin-multicore
 $(Package/mackerel-agent/Default)
-  TITLE:=multicore plugin for mackerel-agent
+  TITLE:=multicore plugin for mackerel-agent (official)
   DEPENDS:=mackerel-agent
 endef
 
@@ -36,7 +36,7 @@ endef
 
 define Package/mackerel-plugin-uptime
 $(Package/mackerel-agent/Default)
-  TITLE:=uptime plugin for mackerel-agent
+  TITLE:=uptime plugin for mackerel-agent (official)
   DEPENDS:=mackerel-agent
 endef
 
