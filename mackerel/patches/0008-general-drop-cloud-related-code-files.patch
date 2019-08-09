@@ -1,4 +1,4 @@
-From 6608c9dad5832528c13adea1d82ee8dd27ed9792 Mon Sep 17 00:00:00 2001
+From 2c6f2429fdeeba9a8c543f2af74432169567e0a0 Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 04:07:25 +0900
 Subject: [PATCH 8/8] general: drop cloud-related code/files
@@ -17,10 +17,10 @@ Subject: [PATCH 8/8] general: drop cloud-related code/files
  delete mode 100644 spec/isec2_linux_test.go
 
 diff --git a/command/command.go b/command/command.go
-index 60d05b3..41a4c0a 100644
+index bb17e0d..f498f21 100644
 --- a/command/command.go
 +++ b/command/command.go
-@@ -145,20 +145,6 @@ func prepareHost(conf *config.Config, ameta *AgentMeta, api *mackerel.API) (*mkr
+@@ -146,20 +146,6 @@ func prepareHost(conf *config.Config, ameta *AgentMeta, api *mackerel.API) (*mkr
  	return result, nil
  }
  
@@ -41,7 +41,7 @@ index 60d05b3..41a4c0a 100644
  
  // Interval between each updating host specs.
  var specsUpdateInterval = 1 * time.Hour
-@@ -174,7 +160,6 @@ type App struct {
+@@ -175,7 +161,6 @@ type App struct {
  	Config                *config.Config
  	Host                  *mkr.Host
  	API                   *mackerel.API
@@ -49,7 +49,7 @@ index 60d05b3..41a4c0a 100644
  	AgentMeta             *AgentMeta
  }
  
-@@ -376,13 +361,6 @@ func enqueueLoop(app *App, postQueue chan *postValue, quit chan struct{}) {
+@@ -377,13 +362,6 @@ func enqueueLoop(ctx context.Context, app *App, postQueue chan *postValue) {
  			var creatingValues []*mkr.HostMetricValue
  			for _, values := range result.Values {
  				hostID := app.Host.ID
@@ -63,7 +63,7 @@ index 60d05b3..41a4c0a 100644
  				for name, value := range values.Values {
  					if math.IsNaN(value) || math.IsInf(value, 0) {
  						logger.Warningf("Invalid value: hostID = %s, name = %s, value = %f\n is not sent.", hostID, name, value)
-@@ -560,19 +538,9 @@ func collectHostParam(conf *config.Config, ameta *AgentMeta) (*mkr.CreateHostPar
+@@ -578,19 +556,9 @@ func collectHostParam(conf *config.Config, ameta *AgentMeta) (*mkr.CreateHostPar
  	}
  
  	specGens := specGenerators()
@@ -83,7 +83,7 @@ index 60d05b3..41a4c0a 100644
  
  	interfaces, err := interfaceGenerator().Generate()
  	if err != nil {
-@@ -656,7 +624,6 @@ func Prepare(conf *config.Config, ameta *AgentMeta) (*App, error) {
+@@ -678,7 +646,6 @@ func Prepare(conf *config.Config, ameta *AgentMeta) (*App, error) {
  		Config:                conf,
  		Host:                  host,
  		API:                   api,
@@ -92,7 +92,7 @@ index 60d05b3..41a4c0a 100644
  	}, nil
  }
 diff --git a/config/config.go b/config/config.go
-index 90f0a42..82a9cf8 100644
+index b8d77e1..b222ef3 100644
 --- a/config/config.go
 +++ b/config/config.go
 @@ -40,58 +40,6 @@ func getAgentName() string {

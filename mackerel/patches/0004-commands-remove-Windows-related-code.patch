@@ -1,4 +1,4 @@
-From c07c2cdc28d05631ebfc1b5a77f361e02303e572 Mon Sep 17 00:00:00 2001
+From 40fdc481ac9547b9aa988989a5ee0e3871ff0454 Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 01:45:14 +0900
 Subject: [PATCH 4/8] commands: remove Windows-related code

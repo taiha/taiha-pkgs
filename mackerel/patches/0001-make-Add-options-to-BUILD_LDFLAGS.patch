@@ -1,4 +1,4 @@
-From b25375c07fa4f65137f40ff5f97f25ec0e6d3867 Mon Sep 17 00:00:00 2001
+From 114e9bbf4176ad7aaef676cce58fe7752ff28edb Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Tue, 12 Sep 2017 14:01:33 +0900
 Subject: [PATCH 1/8] make: Add options to BUILD_LDFLAGS
@@ -9,10 +9,10 @@ Signed-off-by: INAGAKI Hiroshi <musashino.open@gmail.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index c5aa1f9..f75d904 100644
+index 14cef7a..32a13ea 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -9,7 +9,8 @@ BUILD_LDFLAGS := "\
+@@ -17,7 +17,8 @@ BUILD_LDFLAGS := "\
  	  -X main.version=$(VERSION) \
  	  -X main.gitcommit=$(CURRENT_REVISION) \
  	  -X github.com/mackerelio/mackerel-agent/config.agentName=$(MACKEREL_AGENT_NAME) \

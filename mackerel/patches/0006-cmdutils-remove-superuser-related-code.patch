@@ -1,4 +1,4 @@
-From 07d4eb9ad7ae7ebb8f584d022f3e2919e4585533 Mon Sep 17 00:00:00 2001
+From d7bc5a1092f7c88a02a376568709ffaee579381d Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 02:35:21 +0900
 Subject: [PATCH 6/8] cmdutils: remove superuser-related code

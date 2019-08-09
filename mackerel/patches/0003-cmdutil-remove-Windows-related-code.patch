@@ -1,4 +1,4 @@
-From 710bd5dad1f5d47705f84b7cc2c00b4a3a81efc1 Mon Sep 17 00:00:00 2001
+From 3afb8134ac611c4be6bdbe27a7c12026ed4a4560 Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 01:43:44 +0900
 Subject: [PATCH 3/8] cmdutil: remove Windows-related code

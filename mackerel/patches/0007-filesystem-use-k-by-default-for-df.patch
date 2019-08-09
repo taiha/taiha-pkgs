@@ -1,4 +1,4 @@
-From 885a3d553e4cf13a69173419640f4aef0e634537 Mon Sep 17 00:00:00 2001
+From 0f3742cc050e9b4e5a58595c5c060e6fe24f20ec Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 02:39:46 +0900
 Subject: [PATCH 7/8] filesystem: use "-k" by default for df
