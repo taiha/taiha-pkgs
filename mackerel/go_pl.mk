@@ -47,7 +47,7 @@ endef
 define Download/mackerel-official-plugins
   URL:=https://github.com/mackerelio/mackerel-agent-plugins/archive/
   FILE:=$(PLUGIN_TAR)
-  HASH:=2deb9892038a2739539ddaf9854bd6016c1c7c65e915b04941be4820a35fd7f8
+  HASH:=b06fdc071538a463c7a5700b2035173f7344aa94b12c681dc75086194fcb4b08
 endef
 $(eval $(call Download,mackerel-official-plugins))
 
