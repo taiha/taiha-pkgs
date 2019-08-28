@@ -25,6 +25,17 @@ include $(INCLUDE_DIR)/package.mk
 #
 # Environment - referred to lang/golang in openwrt/packages
 #
+GO_PKG_WORK_DIR:=$(PKG_BUILD_DIR)/.go_work
+GO_PKG_GOPATH_DIR:=$(GO_PKG_WORK_DIR)/gopath
+GO_PKG_CACHE_DIR:=$(GO_PKG_WORK_DIR)/cache
+GO_PKG_TMP_DIR:=$(GO_PKG_WORK_DIR)/tmp
+
+define GoPackage/BuildEnvironment
+	GOPATH=$(GO_PKG_GOPATH_DIR) \
+	GOCACHE=$(GO_PKG_CACHE_DIR) \
+	GOTMPDIR=$(GO_PKG_TMP_DIR)
+endef
+
 go_arch=$(subst \
   aarch64,arm64,$(subst \
   i386,386,$(subst \
@@ -81,7 +92,10 @@ endef
 
 define Build/Prepare
 	$(Build/Prepare/Default)
-	( cd "$(PKG_BUILD_DIR)" && go get -u all )
+	mkdir -p $(GO_PKG_GOPATH_DIR) \
+		$(GO_PKG_CACHE_DIR) \
+		$(GO_PKG_TMP_DIR)
+	#( cd "$(PKG_BUILD_DIR)" && go get -u all )
 
 	$(TAR) xvf $(DL_DIR)/$(PLUGIN_TAR) -C $(PKG_BUILD_DIR)
 
@@ -97,8 +111,9 @@ COMPRESSION_PARAM:=-7
 endif
 
 define Build/Compile
-	$(call GoPackage/Environment) go env
-	$(call GoPackage/Environment) \
+	$(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
+		go env
+	$(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
 		make CC="$(HOSTCC)" -C $(PKG_BUILD_DIR) build
 	upx $(COMPRESSION_PARAM) $(PKG_BUILD_DIR)/build/mackerel-agent
 endef
@@ -123,7 +138,8 @@ endef
 
 define Package/mackerel-plugins/compile
 	( cd $(PKG_BUILD_DIR)/mackerel-agent-plugins-$(PLUGIN_VER)/mackerel-plugin-$(1) \
-		&& $(call GoPackage/Environment) go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) )
+		&& $(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
+			go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) )
 	upx --best $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1)
 endef
 
