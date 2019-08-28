@@ -68,7 +68,7 @@ endef
 
 define Package/mackerel-agent/config
 	config PACKAGE_MACKEREL_MAX_COMPRESSION
-	bool "Enable maximum compression by upx for the devices with small flash (<= 8 MiB)"
+	bool "Enable maximum compression by upx for small flash (<= 8 MiB)"
 	default n
 	depends on PACKAGE_mackerel-agent
 endef
