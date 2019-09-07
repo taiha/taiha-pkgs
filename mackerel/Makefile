@@ -116,7 +116,8 @@ define Build/Compile
 	$(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
 		make CC="$(HOSTCC)" -C $(PKG_BUILD_DIR) build
 	upx $(COMPRESSION_PARAM) $(PKG_BUILD_DIR)/build/mackerel-agent
-	go clean -modcache
+	$(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
+		go clean -modcache
 endef
 
 define Package/mackerel-agent/install
@@ -142,7 +143,8 @@ define Package/mackerel-plugins/compile
 		&& $(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
 			go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) )
 	upx --best $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1)
-	go clean -modcache
+	$(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
+		go clean -modcache
 endef
 
 define Package/mackerel-plugins/install
