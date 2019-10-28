@@ -4,7 +4,10 @@
 START=50
 STOP=10
 
+USE_PROCD=1
+
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
 # Name
 NAME="mackerel-agent"
 
@@ -16,37 +19,26 @@ PROG="/usr/bin/${NAME}"
 
 # Files
 CONFFILE="/etc/config/${NAME}.conf"
-PIDFILE="/var/run/${NAME}.pid"
 
-# Command lines
-OPTIONS="-conf=${CONFFILE} -pidfile=${PIDFILE}"
-
-start()
-{
+start_service() {
 	if [ ! -d ${ROOTDIR} ]; then
 		mkdir ${ROOTDIR}
 	fi
-	ulimit -n 65536 1>/dev/null 2>&1 || true
-	${PROG} ${OPTIONS} 2>&1 | logger -t mackerel-agent &
-	sleep 3
-	kill -0 $(cat ${PIDFILE} 2>/dev/null) >/dev/null 2>&1
+	procd_open_instance "$NAME"
+	procd_set_param command "$PROG" "-conf=${CONFFILE}"
+
+	procd_set_param limits core="65536"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
 }
 
-stop()
-{
-	if [ -f $PIDFILE ]; then
-		PROC_ID=$(pgrep -o ${PROG})
-		kill -SIGQUIT ${PROC_ID}
-		wait ${PROC_ID}
-		sleep 3
-		if [ -f $PIDFILE ]; then
-			rm -f $PIDFILE
-		fi
-	fi
+stop_service() {
+	sleep 3
 }
 
 restart()
 {
-	stop_service
-	start_service
+	stop
+	start
 }
