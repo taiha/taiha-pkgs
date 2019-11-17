@@ -36,9 +36,3 @@ start_service() {
 stop_service() {
 	sleep 3
 }
-
-restart()
-{
-	stop
-	start
-}
