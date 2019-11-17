@@ -1,7 +1,7 @@
 From 2fec362ef3f2cc6e84ddef1bf3764cd91f67db0f Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 01:04:48 +0900
-Subject: [PATCH 2/7] version: use "-OpenWrt" suffix for version string
+Subject: [PATCH 2/8] version: use "-OpenWrt" suffix for version string
 
 ---
  version.go | 2 +-

@@ -1,0 +1,41 @@
+From db3552539af0b12b86076587303dd4635e4d4f0c Mon Sep 17 00:00:00 2001
+From: INAGAKI Hiroshi <musashino.open@gmail.com>
+Date: Sun, 17 Nov 2019 20:41:08 +0900
+Subject: [PATCH 8/8] make: enable GO111MODULE by default
+
+---
+ Makefile | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 7627360..20bb6b6 100644
+--- a/Makefile
++++ b/Makefile
+@@ -45,19 +45,19 @@ credits: $(GOBIN)/gocredits
+ 	gocredits -w .
+ 
+ $(GOBIN)/golint:
+-	GO111MODULE=off go get golang.org/x/lint/golint
++	GO111MODULE=on go get golang.org/x/lint/golint
+ 
+ $(GOBIN)/gotestcover:
+-	GO111MODULE=off go get github.com/pierrre/gotestcover
++	GO111MODULE=on go get github.com/pierrre/gotestcover
+ 
+ $(GOBIN)/gocredits:
+-	GO111MODULE=off go get github.com/Songmu/gocredits/cmd/gocredits
++	GO111MODULE=on go get github.com/Songmu/gocredits/cmd/gocredits
+ 
+ $(GOBIN)/goxz:
+-	GO111MODULE=off go get github.com/Songmu/goxz/cmd/goxz
++	GO111MODULE=on go get github.com/Songmu/goxz/cmd/goxz
+ 
+ $(GOBIN)/goveralls:
+-	GO111MODULE=off go get github.com/mattn/goveralls
++	GO111MODULE=on go get github.com/mattn/goveralls
+ 
+ .PHONY: lint
+ lint: deps
+-- 
+2.17.1.windows.2
+
