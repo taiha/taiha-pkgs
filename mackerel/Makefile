@@ -141,7 +141,8 @@ endef
 define Package/mackerel-plugins/compile
 	( cd $(PKG_BUILD_DIR)/mackerel-agent-plugins-$(PLUGIN_VER)/mackerel-plugin-$(1) \
 		&& $(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
-			go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) )
+			GO111MODULE=on \
+				go build -o $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1) )
 	upx --best $(PKG_BUILD_DIR)/plugins/mackerel-plugin-$(1)
 	$(call GoPackage/BuildEnvironment) $(call GoPackage/Environment) \
 		go clean -modcache
