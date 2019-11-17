@@ -1,21 +1,21 @@
-From 5b1a0d05f50e8fc0b92eaa0ded23e5b27980fb63 Mon Sep 17 00:00:00 2001
+From 2fec362ef3f2cc6e84ddef1bf3764cd91f67db0f Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 01:04:48 +0900
-Subject: [PATCH 2/8] version: use "-OpenWrt" suffix for version string
+Subject: [PATCH 2/7] version: use "-OpenWrt" suffix for version string
 
 ---
  version.go | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/version.go b/version.go
-index df9c4d1..e1f7114 100644
+index 37c0b4c..0b95b23 100644
 --- a/version.go
 +++ b/version.go
 @@ -1,5 +1,5 @@
  package main
  
--const version = "0.62.0"
-+const version = "0.62.0-OpenWrt"
+-const version = "0.64.0"
++const version = "0.64.0-OpenWrt"
  
  var gitcommit string
 -- 
