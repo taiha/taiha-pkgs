@@ -42,7 +42,7 @@ DDNS_TEXT="${DDNS_TEXT}PASSWORD:${password}\n.\n"
 # ip modification block
 DDNS_TEXT="${DDNS_TEXT}MODIP\n"
 if [ -n "${DOMAIN_SUB}" ]; then
-	DDNS_TEXT="${DDNS_TEXT}HOSTNAME:${DOMAIN_SUB}"	# add "HOSTNAME" if sub-domains is supecified
+	DDNS_TEXT="${DDNS_TEXT}HOSTNAME:${DOMAIN_SUB}\n"	# add "HOSTNAME" if sub-domains is supecified
 fi
 DDNS_TEXT="${DDNS_TEXT}DOMNAME:${DOMAIN_SCND}.${DOMAIN_TLD}\n"
 DDNS_TEXT="${DDNS_TEXT}IPV4:${LOCAL_IP}\n.\n"
@@ -64,7 +64,7 @@ ANSWER="$(echo "${ANSWER}" | grep -E "[0-9]{3}\s")"
 CMD_RESULT_CNT="$(echo "${ANSWER}" | grep -c "000 COMMAND SUCCESSFUL")"
 
 # error occured when the count is smaller than 4
-if [ "$CMD_RESULT_CNT" < "4" ]; then
+if [ "$CMD_RESULT_CNT" -lt "4" ]; then
 	ERROR_MSG="$(echo "${ANSWER}" | grep -v "000 COMMAND SUCCESSFUL")"
 
 	write_log 4 "Failed to update IP address on onamae.com (domain: ${domain})"
