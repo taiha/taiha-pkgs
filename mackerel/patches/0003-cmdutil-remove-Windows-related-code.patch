@@ -1,7 +1,7 @@
-From 209d76eb467e1a1b210c5779a2a60041aa293a28 Mon Sep 17 00:00:00 2001
+From ea78cd247b43a8c1ada02682058caa77e07a61dd Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 01:43:44 +0900
-Subject: [PATCH 3/8] cmdutil: remove Windows-related code
+Subject: [PATCH 3/7] cmdutil: remove Windows-related code
 
 ---
  cmdutil/cmdutil.go | 19 ++-----------------
@@ -66,5 +66,5 @@ index b8f86d4..eb7ac18 100644
  		exitCode = exitStatus.GetChildExitCode()
  	}
 -- 
-2.17.1.windows.2
+2.29.2.windows.3
 
