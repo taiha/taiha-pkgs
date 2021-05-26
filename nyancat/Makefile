@@ -14,7 +14,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/klange/nyancat.git
 PKG_SOURCE_VERSION:=5ffb6c5c03d0e9156db8f360599d4f0449bb16b9
 
-PKG_LICENSE:=
+PKG_LICENSE:=NCSA
 PKG_LICENSE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
