@@ -1,7 +1,7 @@
-From 92c9410162779d14313326c083c45f51d0401334 Mon Sep 17 00:00:00 2001
+From 749c4afa179ed00e88f0907273c19f1ae288142c Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 01:50:35 +0900
-Subject: [PATCH 5/8] filesystem: remove darwin-related code
+Subject: [PATCH 5/7] filesystem: remove darwin-related code
 
 ---
  util/filesystem.go | 17 -----------------
@@ -43,5 +43,5 @@ index 2ceed39..89da9ad 100644
  	}
  	return filesystems
 -- 
-2.17.1.windows.2
+2.31.1.windows.1
 

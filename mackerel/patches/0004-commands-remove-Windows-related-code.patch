@@ -1,7 +1,7 @@
-From d4b570ba5f5aa57dc6d1c2ffbe81ca4523741464 Mon Sep 17 00:00:00 2001
+From fa4be6a79014bfa10fabe16c25ad791d87d6c211 Mon Sep 17 00:00:00 2001
 From: INAGAKI Hiroshi <musashino.open@gmail.com>
 Date: Sun, 23 Jun 2019 01:45:14 +0900
-Subject: [PATCH 4/8] commands: remove Windows-related code
+Subject: [PATCH 4/7] commands: remove Windows-related code
 
 ---
  commands.go | 3 ---
@@ -22,5 +22,5 @@ index 5840a55..5e0b51a 100644
  	copy(copiedArgv, argv)
  	conf, err := resolveConfig(fs, argv)
 -- 
-2.17.1.windows.2
+2.31.1.windows.1
 
