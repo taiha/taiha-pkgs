@@ -33,10 +33,6 @@ define Package/nyancat/description
   http://nyancat.dakko.us/
 endef
 
-define Build/Compile
-	make -C $(PKG_BUILD_DIR) CC=$(TARGET_CC)
-endef
-
 define Package/nyancat/install
 	# Install binary file
 	$(INSTALL_DIR) $(1)/usr/bin
