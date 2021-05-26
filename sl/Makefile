@@ -34,19 +34,6 @@ define Package/sl/description
   sl command
 endef
 
-define Build/Configure
-endef
-
-define Build/Prepare
-endef
-
-define Build/Compile
-	tar xvf $(BUILD_DIR)/../../dl/$(PKG_NAME)-$(PKG_VERSION).tar.xz -C $(BUILD_DIR)
-	$(TARGET_CC) \
-			-Wall -g \
-			-o $(PKG_BUILD_DIR)/sl $(PKG_BUILD_DIR)/sl.c -lncurses
-endef
-
 define Package/sl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sl $(1)/usr/bin/
