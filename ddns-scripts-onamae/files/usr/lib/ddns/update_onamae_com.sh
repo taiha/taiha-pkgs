@@ -73,6 +73,8 @@ if [ "$CMD_RESULT_CNT" -lt "4" ]; then
 	else				# error message isn't printed (ex.: address contains invalid character(s))
 		write_log 17 "(The server (${ENDPOINT}) didn't reply any error messages, unknown error)"
 	fi
+
+	return 1
 else
 	write_log 5 "Succeeded to update IP address on onamae.com (domain: ${domain})"
 fi
