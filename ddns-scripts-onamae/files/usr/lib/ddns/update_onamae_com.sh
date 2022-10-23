@@ -11,12 +11,14 @@
 #   https://koriyoukai.net/blog/index.php/20191207_264
 #   https://www.harada-its.com/2019/06/01-421/
 
+# check requirements
 if type openssl &> /dev/null; then
-	"Performing update for onamae.com requires openssl (package: openssl-util). Please install"
+	write_log 3 "Performing update for onamae.com requires openssl (package: openssl-util). Please install"
+	return 127
 fi
-[ -z "{$username}" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
-[ -z "${password}" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
-[ -z "${domain}" ] && write_log 14 "Service section not configured correctly! Missing zone id as 'domain'"
+[ -z "${username}" ] || [ -z "${password}" ] || [ -z "${domain}" ] && \
+	write_log 3 "Service section not configured correctly! Missing 'username', 'password' or 'domain'" && \
+	return 127
 
 local ENDPOINT="ddnsclient.onamae.com"
 local ENDPOINT_PORT="65010"
@@ -26,7 +28,9 @@ local DOMAIN_TLD DOMAIN_NOTLD DOMAIN_SCND DOMAIN_SUB
 DOMAIN_TLD="${domain##*.}"				# TLD of the specified domain ("com")
 DOMAIN_NOTLD="${domain%%.${DOMAIN_TLD}}"		# the specified domain without TLD ("test.www.example")
 DOMAIN_SCND="${DOMAIN_NOTLD##*.}"			# the second level domain of ("example")
-[ -z "${DOMAIN_SCND}" ] && write_log 14 "Invalid second level domain name is specified"
+[ -z "${DOMAIN_SCND}" ] && \
+	write_log 3 "Invalid second level domain name is specified" && \
+	return 127
 DOMAIN_SUB="${domain%%${DOMAIN_SCND}.${DOMAIN_TLD}}"	# least sub-domains of the specified domain ("test.www.")
 DOMAIN_SUB="${DOMAIN_SUB%%.}"				# remove a comma at the end of sub-domains
 
@@ -67,11 +71,11 @@ CMD_RESULT_CNT="$(echo "${ANSWER}" | grep -c "000 COMMAND SUCCESSFUL")"
 if [ "$CMD_RESULT_CNT" -lt "4" ]; then
 	ERROR_MSG="$(echo "${ANSWER}" | grep -v "000 COMMAND SUCCESSFUL")"
 
-	write_log 4 "Failed to update IP address on onamae.com (domain: ${domain})"
+	write_log 3 "Failed to update IP address on onamae.com (domain: ${domain})"
 	if [ -n "$ERROR_MSG" ]; then	# error message is printed
-		write_log 17 "${ERROR_MSG}"	# write log message with error massage from server and exit
+		write_log 7 "${ERROR_MSG}"	# write log message with error massage from server and exit
 	else				# error message isn't printed (ex.: address contains invalid character(s))
-		write_log 17 "(The server (${ENDPOINT}) didn't reply any error messages, unknown error)"
+		write_log 7 "(The server (${ENDPOINT}) didn't reply any error messages, unknown error)"
 	fi
 
 	return 1
