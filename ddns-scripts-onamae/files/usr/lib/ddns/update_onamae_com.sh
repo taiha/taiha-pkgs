@@ -75,8 +75,8 @@ if [ "$CMD_RESULT_CNT" -lt "4" ]; then
 	fi
 
 	return 1
-else
-	write_log 5 "Succeeded to update IP address on onamae.com (domain: ${domain})"
 fi
+
+write_log 5 "Succeeded to update IP address on onamae.com (domain: ${domain})"
 
 return 0
