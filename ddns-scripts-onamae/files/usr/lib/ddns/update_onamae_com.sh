@@ -34,24 +34,24 @@ DOMAIN_SUB="${DOMAIN_SUB%%.}"				# remove a comma at the end of sub-domains
 # submit & execute a command on server
 local DDNS_TEXT
 
-# login block
-DDNS_TEXT="LOGIN\n"
-DDNS_TEXT="${DDNS_TEXT}USERID:${username}\n"
-DDNS_TEXT="${DDNS_TEXT}PASSWORD:${password}\n.\n"
-
-# ip modification block
-DDNS_TEXT="${DDNS_TEXT}MODIP\n"
+DDNS_TEXT="LOGIN
+USERID:${username}
+PASSWORD:${password}
+.
+MODIP"
 if [ -n "${DOMAIN_SUB}" ]; then
-	DDNS_TEXT="${DDNS_TEXT}HOSTNAME:${DOMAIN_SUB}\n"	# add "HOSTNAME" if sub-domains is supecified
+	DDNS_TEXT="${DDNS_TEXT}
+HOSTNAME:${DOMAIN_SUB}"	# add "HOSTNAME" if sub-domains is supecified
 fi
-DDNS_TEXT="${DDNS_TEXT}DOMNAME:${DOMAIN_SCND}.${DOMAIN_TLD}\n"
-DDNS_TEXT="${DDNS_TEXT}IPV4:${LOCAL_IP}\n.\n"
-
-# logout block
-DDNS_TEXT="${DDNS_TEXT}LOGOUT\n.\n"
+DDNS_TEXT="${DDNS_TEXT}
+DOMNAME:${DOMAIN_SCND}.${DOMAIN_TLD}
+IPV4:${LOCAL_IP}
+.
+LOGOUT
+."
 
 local CMD_RESULT_CNT ERROR_MSG
-ANSWER="$(echo -e "${DDNS_TEXT}" |\
+ANSWER="$(echo "${DDNS_TEXT}" |\
 		flock /tmp/$(basename -s .sh "$0").lock \
 		openssl s_client --connect \
 		${ENDPOINT}:${ENDPOINT_PORT} \
