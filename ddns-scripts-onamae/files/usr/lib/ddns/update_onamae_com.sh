@@ -45,7 +45,7 @@ HOSTNAME:${DOMAIN_SUB}"	# add "HOSTNAME" if sub-domains is supecified
 fi
 DDNS_TEXT="${DDNS_TEXT}
 DOMNAME:${DOMAIN_SCND}.${DOMAIN_TLD}
-IPV4:${LOCAL_IP}
+IPV4:${__IP}
 .
 LOGOUT
 ."
