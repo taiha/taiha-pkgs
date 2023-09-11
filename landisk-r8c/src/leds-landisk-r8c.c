@@ -217,7 +217,7 @@ static ssize_t leds_brightness_show(struct device *dev,
 	long brightness;
 
 	ret = landisk_r8c_exec_cmd(l->r8c, CMD_LED, NULL, cmdbuf, 4);
-	if (ret || !strlen(cmdbuf))
+	if (ret <= 0 || !strlen(cmdbuf))
 		return 0;
 
 	/* R8C returns hex value */
