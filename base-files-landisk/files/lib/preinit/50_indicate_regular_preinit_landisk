@@ -1,0 +1,12 @@
+indicate_regular_preinit_landisk() {
+	. /lib/functions.sh
+	case $(board_name) in
+	iodata,hdl-a|\
+	iodata,hdl2-a)
+		echo "on" > "/sys/devices/platform/landisk-r8c/leds-landisk-r8c/status_mode"
+		echo "notify" > "/sys/devices/platform/landisk-r8c/leds-landisk-r8c/status_mode"
+		;;
+	esac
+}
+
+boot_hook_add preinit_main indicate_regular_preinit_landisk

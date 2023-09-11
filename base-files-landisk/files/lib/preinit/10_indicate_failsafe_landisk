@@ -1,0 +1,11 @@
+indicate_failsafe_led_landisk() {
+	. /lib/functions.sh
+	case $(board_name) in
+	iodata,hdl-a|\
+	iodata,hdl2-a)
+		echo "err" > "/sys/devices/platform/landisk-r8c/leds-landisk-r8c/status_mode"
+		;;
+	esac
+}
+
+boot_hook_add failsafe indicate_failsafe_led_landisk
