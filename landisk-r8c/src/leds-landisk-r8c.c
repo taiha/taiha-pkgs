@@ -133,6 +133,10 @@ static const struct r8c_status_mode status_mode_list[] = {
 	{
 		.id = 5, .name = "notify",
 	},
+	/* mode can't be updated after setting "serious_err" until reset (:reset) */
+	{
+		.id = 8, .name = "serious_err",
+	}
 };
 
 static ssize_t status_mode_show(struct device *dev,
