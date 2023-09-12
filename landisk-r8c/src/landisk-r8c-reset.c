@@ -16,6 +16,7 @@
 #define CMD_RESET	"reset"
 #define CMD_POFF	"poweroff"
 #define CMD_WOL		"wol_flag"
+#define CMD_FIRST	"first"
 #define CMD_PWR_AC	"intrp"
 #define CMD_DUMMY	"sts"
 
@@ -95,6 +96,18 @@ out:
 		pr_err("failed to execute poweroff %d\n", ret);
 }
 
+static ssize_t landisk_r8c_flag_get(char *buf, const char *cmd)
+{
+	ssize_t ret;
+	char cmdbuf[4];
+
+	ret = landisk_r8c_exec_cmd(r8c_rst->r8c, cmd, NULL, cmdbuf, 4);
+	if (ret != 1)
+		return ret < 0 ? ret : -EINVAL;
+
+	return scnprintf(buf, 4, "%s\n", cmdbuf);
+}
+
 static ssize_t landisk_r8c_flag_set(const char *buf, size_t len, const char *cmd,
 				    const char *arg_en, const char *arg_dis)
 {
@@ -122,14 +135,7 @@ static ssize_t landisk_r8c_flag_set(const char *buf, size_t len, const char *cmd
 static ssize_t wol_flag_show(struct device *dev, struct device_attribute *attr,
 			     char *buf)
 {
-	ssize_t ret;
-	char cmdbuf[4];
-
-	ret = landisk_r8c_exec_cmd(r8c_rst->r8c, CMD_WOL, NULL, cmdbuf, 4);
-	if (ret <= 0)
-		return 0;
-
-	return scnprintf(buf, 4, "%s\n", cmdbuf);
+	return landisk_r8c_flag_get(buf, CMD_WOL);
 }
 
 static ssize_t wol_flag_store(struct device *dev, struct device_attribute *attr,
@@ -140,17 +146,18 @@ static ssize_t wol_flag_store(struct device *dev, struct device_attribute *attr,
 
 static DEVICE_ATTR_RW(wol_flag);
 
+static ssize_t first_boot_on_ac_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return landisk_r8c_flag_get(buf, CMD_FIRST);
+}
+
+static DEVICE_ATTR_RO(first_boot_on_ac);
+
 static ssize_t power_on_ac_show(struct device *dev,
 				struct device_attribute *attr, char *buf)
 {
-	ssize_t ret;
-	char cmdbuf[4];
-
-	ret = landisk_r8c_exec_cmd(r8c_rst->r8c, CMD_PWR_AC, "3", cmdbuf, 4);
-	if (ret <= 0)
-		return 0;
-
-	return scnprintf(buf, 4, "%s\n", cmdbuf);
+	return landisk_r8c_flag_get(buf, CMD_PWR_AC);
 }
 
 static ssize_t power_on_ac_store(struct device *dev,
@@ -164,6 +171,7 @@ static DEVICE_ATTR_RW(power_on_ac);
 
 static struct attribute *r8c_poweroff_attrs[] = {
 	&dev_attr_wol_flag.attr,
+	&dev_attr_first_boot_on_ac.attr,
 	&dev_attr_power_on_ac.attr,
 	NULL,
 };
