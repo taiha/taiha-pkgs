@@ -13,7 +13,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/base-files-landisk
   SECTION:=base
   CATEGORY:=Base system
-  DEPENDS:=base-files kmod-leds-landisk-r8c
+  DEPENDS:=base-files kmod-landisk-r8c
   TITLE:=base-files for I-O DATA LAN DISK
   URL:=
   VERSION:=0.0.1
