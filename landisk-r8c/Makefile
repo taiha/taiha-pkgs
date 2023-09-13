@@ -14,16 +14,6 @@ PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
-define KernelPackage/mfd-core
-  SUBMENU:=Other modules
-  TITLE:=MFD Core
-  FILES:=$(PKG_BUILD_DIR)/mfd-core.ko
-  AUTOLOAD:=$(call AutoProbe,mfd-core,1)
-endef
-
-define KernelPackage/mfd-core/description
-endef
-
 define KernelPackage/landisk-r8c
   SUBMENU:=Other modules
   TITLE:=R8C MCU driver for I-O DATA LAN DISK series NAS
@@ -98,14 +88,12 @@ endef
 
 define Build/Prepare
 	$(CP) ./src/. $(PKG_BUILD_DIR)
-	$(LN) -s $(LINUX_DIR)/drivers/mfd/mfd-core.c $(PKG_BUILD_DIR)/mfd-core.c
 endef
 
 define Build/Compile
 	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" modules
 endef
 
-$(eval $(call KernelPackage,mfd-core))
 $(eval $(call KernelPackage,landisk-r8c))
 $(eval $(call KernelPackage,hwmon-landisk-r8c))
 $(eval $(call KernelPackage,input-landisk-r8c-beeper))

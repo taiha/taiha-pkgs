@@ -1,4 +1,3 @@
-obj-m += mfd-core.o
 obj-m += landisk-r8c.o
 obj-m += landisk-r8c-keys.o
 obj-m += leds-landisk-r8c.o
