@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+START=95
+boot() {
+	[ "$FAILSAFE" = "1" ] && return
+
+	. /lib/functions.sh
+	. /lib/functions/leds.sh
+	case $(board_name) in
+	buffalo,ts3400d-hdd|\
+	buffalo,ts3400d-usb)
+		led_on "terastation:power"
+		;;
+	esac
+}

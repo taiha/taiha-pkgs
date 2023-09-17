@@ -1,0 +1,14 @@
+indicate_failsafe_led_landisk() {
+	. /lib/functions.sh
+	. /lib/functions/leds.sh
+	case $(board_name) in
+	buffalo,ts3400d-hdd|\
+	buffalo,ts3400d-usb)
+		sleep 1
+		led_off "terastation:info"
+		led_on "terastation:lcd-red"
+		;;
+	esac
+}
+
+boot_hook_add failsafe indicate_failsafe_led_landisk

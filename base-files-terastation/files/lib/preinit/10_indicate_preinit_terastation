@@ -1,0 +1,14 @@
+pi_indicate_preinit_landisk() {
+	. /lib/functions.sh
+	. /lib/functions/leds.sh
+	case $(board_name) in
+	buffalo,ts3400d-hdd|\
+	buffalo,ts3400d-usb)
+		led_timer "terastation:power" 1 1
+		led_on "terastation:info"
+		echo 12 > /sys/devices/platform/ts-miconv2/leds-ts-miconv2/lcd_brightness
+		;;
+	esac
+}
+
+boot_hook_add preinit_main pi_indicate_preinit_landisk
