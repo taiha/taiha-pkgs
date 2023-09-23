@@ -47,6 +47,7 @@ struct micon_led_data {
 
 struct micon_leds {
 	struct miconv2 *micon;
+	struct notifier_block nb;
 	u8 reg_leds;
 	struct micon_led_data *leds[0];
 };
@@ -349,6 +350,16 @@ static struct ts_model_led_config ts_model_list[] = {
 	},
 };
 
+static int ts_miconv2_leds_shutdown(struct notifier_block *nb,
+				    unsigned long mode, void *data)
+{
+	struct micon_leds *l = container_of(nb, struct micon_leds, nb);
+
+	pr_info("Shutdown LEDs\n");
+	ts_miconv2_write_u16(l->micon, MICON_CMD_LED_ONOFF, 0);
+	return NOTIFY_DONE;
+}
+
 static int ts_miconv2_leds_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -376,11 +387,17 @@ static int ts_miconv2_leds_probe(struct platform_device *pdev)
 
 	dev_set_drvdata(dev, l);
 	l->micon = micon;
+	l->nb.notifier_call = ts_miconv2_leds_shutdown;
+	l->nb.priority = 128;
 
 	ret = ts_miconv2_leds_register(l, dev, model);
 	if (ret)
 		return ret;
 	dev_info(dev, "%d LEDs registered\n", l->reg_leds);
+
+	ret = devm_register_reboot_notifier(dev, &l->nb);
+	if (ret)
+		return ret;
 
 	ret = sysfs_create_group(&dev->kobj, &ts_micon_leds_attr_group);
 	if (ret)
