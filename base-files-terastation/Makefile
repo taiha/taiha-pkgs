@@ -39,6 +39,9 @@ define Package/base-files-terastation/install
 
 	install -d -m0775 $(1)/lib/preinit/
 	install -m0664 ./files/lib/preinit/* $(1)/lib/preinit/
+
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/usr/sbin/* $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,base-files-terastation))
