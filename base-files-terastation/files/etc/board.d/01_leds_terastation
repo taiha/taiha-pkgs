@@ -1,0 +1,18 @@
+. /lib/functions/uci-defaults.sh
+
+board_config_update
+
+board=$(board_name)
+boardname="${board##*,}"
+
+case "$board" in
+buffalo,ts3400d-hdd|\
+buffalo,ts3400d-usb)
+	ucidef_set_led_netdev "lan1" "LAN1" "terastation:lan1" "eth0" "link"
+	ucidef_set_led_netdev "lan2" "LAN2" "terastation:lan2" "eth1" "link"
+	;;
+esac
+
+board_config_flush
+
+exit 0

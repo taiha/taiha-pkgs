@@ -37,6 +37,9 @@ define Package/base-files-terastation/install
 	install -d -m0775 $(1)/etc/init.d/
 	install -m0775 ./files/etc/init.d/done-terastation $(1)/etc/init.d/
 
+	install -d -m0775 $(1)/etc/board.d/
+	install -m0664 ./files/etc/board.d/* $(1)/etc/board.d/
+
 	install -d -m0775 $(1)/lib/preinit/
 	install -m0664 ./files/lib/preinit/* $(1)/lib/preinit/
 
