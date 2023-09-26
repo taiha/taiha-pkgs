@@ -344,14 +344,16 @@ static int ts_miconv2_micon_init(struct miconv2 *micon)
 	pr_debug("power state is %u\n", val);
 
 	/*
-	 * set serialmode_console when power_state=2(cold boot) or
-	 * 5(boot after poweroff)
+	 * set serialmode_console
 	 * Note: setting serialmode_console mode again will breaks console input
 	 */
-	if (val == MICON_PWR_STAT_CLDBOOT ||
-	    val == MICON_PWR_STAT_PWROFF) {
+	switch (val) {
+	case MICON_PWR_STAT_CLDBOOT: /* cold boot (first boot on AC) */
+	case MICON_PWR_STAT_PWROFF:  /* turned off by normal operations */
+	case MICON_PWR_STAT_RUNNING: /* forcibly turned off by Power button */
 		pr_info("set serialmode to console\n");
 		ts_miconv2_write_flag(micon, MICON_CMD_SERMOD_CON);
+		break;
 	}
 
 	return 0;
