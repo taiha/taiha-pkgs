@@ -148,9 +148,6 @@ int ts_miconv2_exec_cmd(struct miconv2 *micon, u8 op, u8 cmd, const u8 *data,
 		goto exit;
 	}
 
-	if (ign_err)
-		goto skip_errchk;
-
 	/* Error Check */
 	if (micon->rxmsg.op  != op ||
 	    micon->rxmsg.cmd != cmd) {
@@ -158,7 +155,8 @@ int ts_miconv2_exec_cmd(struct miconv2 *micon, u8 op, u8 cmd, const u8 *data,
 		ret = -EINVAL;
 		goto exit;
 	}
-	if (op == MICON_CMD_OP_WR || micon->rxmsg.len == 1) {
+	if (!ign_err && /* skip checking of MICON error code when specified */
+	    (op == MICON_CMD_OP_WR || micon->rxmsg.len == 1)) {
 		const struct micon_error *err = &micon_error_list[0];
 		/* search error code */
 		do {
@@ -174,7 +172,6 @@ int ts_miconv2_exec_cmd(struct miconv2 *micon, u8 op, u8 cmd, const u8 *data,
 		} while ((++err)->val);
 	}
 
-skip_errchk:
 	if (!rpl_len)
 		return 0;
 
