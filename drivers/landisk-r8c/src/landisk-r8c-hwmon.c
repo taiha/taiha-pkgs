@@ -18,19 +18,21 @@
 #define R8C_TEMP_MIN		0
 
 /*
+ * fancont setting
+ *
  * return val by fancont command
  *
  *   ex.: 12
  *        1--> Manual (0-> Auto)
  *         2-> Speed 2
  */
-#define R8C_FANCTL_MAN_MASK	0xf0U
-#define R8C_FANCTL_SPD_MASK	0xfU
-
-/* fancont setting */
 #define R8C_FANCTL_MOD_MASK	0xf0U
+#define R8C_FANCTL_SPD_MASK	0xfU
+#define R8C_FANCTL_MOD_AUTO	"0"
 
-#define FANCTL_MOD(x)		(x << 4)
+#define R8C_FANMAP(_st,_pa) 	(_st << 4 | _pa)
+#define R8C_FANMAP_ST_MASK	0xf0U
+#define R8C_FANMAP_PA_MASK	0xfU
 
 /* threshold indexes */
 #define R8C_THLD_FANSPD_2ND	0
@@ -52,6 +54,10 @@
 #define R8C_EV_FANERR		'F'
 #define R8C_EV_TMPERR		'T'
 
+/* others */
+#define R8C_FANLABEL		"Rear FAN"
+#define R8C_FANLABEL_MAX	44
+
 struct landisk_model_info {
 	u32 model_id;
 	const struct attribute_group **attr_grp;
@@ -62,13 +68,8 @@ struct landisk_model_info {
 struct r8c_hwmon {
 	struct r8c_mcu *r8c;
 	struct notifier_block nb;
+	char fan_label[R8C_FANLABEL_MAX];
 	const struct landisk_model_info *model;
-};
-
-struct r8c_fan_mode {
-	u8 mode_id;
-	char *name;
-	u32 models;
 };
 
 enum {
@@ -96,9 +97,9 @@ static int r8c_thld_set(struct r8c_hwmon *h, int index, long temp)
 
 	ret = landisk_r8c_exec_cmd(h->r8c, CMD_THSET, cmdbuf, retbuf, 4);
 	/* R8C returns '1' when failed to set value */
-	if (ret <= 0 || retbuf[0] == '1') {
+	if (ret != 1 || retbuf[0] == '1') {
 		pr_err("failed to set threshold\n");
-		return ret;
+		return ret < 0 ? ret : -EINVAL;
 	}
 
 	return 0;
@@ -114,15 +115,16 @@ static int r8c_thld_get(struct r8c_hwmon *h, u32 *val)
 	ret = landisk_r8c_exec_cmd(h->r8c, CMD_THGET, NULL, retbuf, 12);
 	if (ret <= 0) {
 		pr_err("failed to get threshold\n");
-		return ret;
+		return ret < 0 ? ret : -EINVAL;
 	}
 
 	ret = sscanf(retbuf, "%02x %02x %02x", &spd2, &spd1, &terr);
 	if (ret != 3)
 		return -EINVAL;
 
-	*val = FIELD_PREP(0xff0000, spd2) | FIELD_PREP(0xff00, spd1) |
-	       FIELD_PREP(0xff, terr);
+	*val = FIELD_PREP(TH_IDX_MASK(R8C_THLD_FANSPD_2ND), spd2) |
+	       FIELD_PREP(TH_IDX_MASK(R8C_THLD_FANSPD_1ST), spd1) |
+	       FIELD_PREP(TH_IDX_MASK(R8C_THLD_TEMP_CRIT), terr);
 
 	return 0;
 }
@@ -134,9 +136,9 @@ static int r8c_temp_get(struct r8c_hwmon *h, long *temp)
 	int ret;
 
 	ret = landisk_r8c_exec_cmd(h->r8c, CMD_TEMP, NULL, retbuf, 4);
-	if (ret <= 0) {
+	if (ret != 2) {
 		pr_err("failed to get temperature\n");
-		return ret;
+		return ret < 0 ? ret : -EINVAL;
 	}
 
 	ret = kstrtol(retbuf, 16, temp);
@@ -144,6 +146,35 @@ static int r8c_temp_get(struct r8c_hwmon *h, long *temp)
 		return ret;
 	*temp *= 1000;
 
+	return 0;
+}
+
+static int r8c_fanctl_get(struct r8c_hwmon *h, long *val, long mask)
+{
+	char buf[4];
+	int ret;
+
+	ret = landisk_r8c_exec_cmd(h->r8c, CMD_FANCTL, NULL, buf, 4);
+	if (ret != 2)
+		return ret < 0 ? ret : -EINVAL;
+	ret = kstrtol(buf, 16, val);
+	if (ret)
+		return ret;
+	if (mask)
+		*val = (*val & mask) >> find_first_bit(&mask, BITS_PER_BYTE);
+	return 0;
+}
+
+static int r8c_hwmon_read_string(struct device *dev, enum hwmon_sensor_types type,
+				 u32 attr, int chan, const char **str)
+{
+	struct r8c_hwmon *h = dev_get_drvdata(dev);
+
+	if (type != hwmon_fan ||
+	    attr != hwmon_fan_label)
+		return -EINVAL;
+
+	*str = h->fan_label;
 	return 0;
 }
 
@@ -166,12 +197,34 @@ static int r8c_hwmon_read(struct device *dev,
 			if (ret)
 				return ret;
 
-			*val = FIELD_GET(TH_IDX_MASK(R8C_THLD_TEMP_CRIT),
-					 thld);
+			*val = FIELD_GET(TH_IDX_MASK(R8C_THLD_TEMP_CRIT), thld);
 			*val *= 1000;
 			return 0;
 		}
 		break;
+	case hwmon_fan:
+		switch (attr) {
+		case hwmon_fan_enable:
+			return r8c_fanctl_get(h, val, R8C_FANCTL_MOD_MASK);
+		case hwmon_fan_target:
+			u8 fan_spd;
+			long param;
+			int i;
+
+			ret = r8c_fanctl_get(h, &param, R8C_FANCTL_SPD_MASK);
+			if (ret)
+				return ret;
+			for (i = 0; i < h->model->fan_spd_num; i++) {
+				fan_spd = h->model->fan_spds[i];
+				if (param != FIELD_GET(R8C_FANMAP_PA_MASK, fan_spd))
+					continue;
+				*val = i;
+				return 0;
+			}
+			return -EINVAL;
+		default:
+			break;
+		}
 	default:
 		break;
 	}
@@ -184,9 +237,68 @@ static int r8c_hwmon_write(struct device *dev,
 			   u32 attr, int chan, long val)
 {
 	struct r8c_hwmon *h = dev_get_drvdata(dev);
+	int ret;
 
-	if (type == hwmon_temp && attr == hwmon_temp_crit)
-		return r8c_thld_set(h, R8C_THLD_TEMP_CRIT, val);
+	if (val < 0)
+		return -EINVAL;
+
+	switch (type) {
+	case hwmon_temp:
+		switch (attr) {
+		case hwmon_temp_crit:
+			return r8c_thld_set(h, R8C_THLD_TEMP_CRIT, val);
+		default:
+			break;
+		}
+		break;
+	case hwmon_fan:
+		char buf[4];
+
+		/*
+		 * buf[0]: Auto(0)/Manual(1)
+		 * buf[1]: Current Speed
+		 */
+		ret = landisk_r8c_exec_cmd(h->r8c, CMD_FANCTL, NULL, buf, 4);
+		if (ret != 2)
+			return ret < 0 ? ret : -EINVAL;
+
+		switch (attr) {
+		case hwmon_fan_enable:
+			/* Auto: "0" (0x30), Manual: "1" (0x31) */
+			if (!!(val) == !!(buf[0] & GENMASK(3,0)))
+				return 0;
+			/*
+			 * Set speed
+			 * - val=0 (disable): set Auto
+			 * - val>0 (enable) : set current speed in Auto
+			 */
+			return landisk_r8c_exec_cmd(h->r8c, CMD_FANCTL,
+						    !!(val) ?
+							&buf[1] :
+							R8C_FANCTL_MOD_AUTO,
+						    NULL, 0);
+		case hwmon_fan_target:
+			const struct landisk_model_info *model = h->model;
+
+			/* return error if not enabled */
+			if (!(buf[0] & GENMASK(3,0)))
+				return -EINVAL;
+
+			/* val is larger than the max. step */
+			if (val > model->fan_spd_num - 1)
+				return -EINVAL;
+
+			scnprintf(buf, 4, "%u",
+				  FIELD_GET(R8C_FANMAP_PA_MASK,
+					    model->fan_spds[val]));
+			return landisk_r8c_exec_cmd(h->r8c, CMD_FANCTL,
+						    buf, NULL, 0);
+		default:
+			break;
+		}
+	default:
+		break;
+	}
 
 	return -EINVAL;
 }
@@ -206,6 +318,16 @@ static umode_t r8c_hwmon_is_visible(const void *data,
 			break;
 		}
 		break;
+	case hwmon_fan:
+		switch (attr) {
+		case hwmon_fan_enable:
+		case hwmon_fan_target:
+			return 0644;
+		case hwmon_fan_label:
+			return 0444;
+		default:
+			break;
+		}
 	default:
 		break;
 	}
@@ -240,219 +362,94 @@ static ssize_t fan1_temp_threshold_store(struct device *dev,
 {
 	struct r8c_hwmon *h = dev_get_drvdata(dev);
 	int index = (to_sensor_dev_attr(attr))->index;
-	u32 cur_thld, thld;
+	u32 thld, val;
 	ssize_t ret;
 
 	/* millicelsius */
-	ret = kstrtou32(buf, 0, &thld);
+	ret = kstrtou32(buf, 0, &val);
 	if (ret)
 		return -EINVAL;
+	/* to celsius */
+	val /= 1000;
 
 	/* limitation: 1st_threshold < 2nd_threshold */
-	ret = r8c_thld_get(h, &cur_thld);
+	ret = r8c_thld_get(h, &thld);
 	if (ret)
 		return -EINVAL;
 
-	/* if setting 2nd threshold */
-	if (index == 0 && thld <= (FIELD_GET(0xff00, cur_thld) * 1000)) {
-		dev_err(dev,
-			"please specify higher value than threashold1\n");
+	switch (index) {
+	case R8C_THLD_FANSPD_2ND:
+		/* equal or lower than index 1 (THLD_FANSPD_1ST) */
+		if (val <= FIELD_GET(TH_IDX_MASK(R8C_THLD_FANSPD_1ST), thld)) {
+			dev_err(dev,
+				"please specify higher value than threashold1\n");
+			return -EINVAL;
+		}
+		break;
+	case R8C_THLD_FANSPD_1ST:
+		/* equal or higher than index 0 (THLD_FANSPD_2ND) */
+		if (val >= FIELD_GET(TH_IDX_MASK(R8C_THLD_FANSPD_2ND), thld)) {
+			if (h->model->fan_spd_num <= 3) {
+				/* set inactive 2nd threshold */
+				ret = r8c_thld_set(h, R8C_THLD_FANSPD_2ND,
+					   val * 1000 + 1000);
+				if (ret)
+					return -EINVAL;
+			} else {
+				dev_err(dev,
+					"please specify lower value"
+					"than threshold2\n");
+				return -EINVAL;
+			}
+		}
+		break;
+	default:
 		return -EINVAL;
 	}
 
-	/* if setting 1st threshold */
-	if (index == 1 && (FIELD_GET(0xff0000, cur_thld) * 1000) <= thld) {
-		if (h->model->fan_spd_num <= 3) {
-			ret = r8c_thld_set(h, R8C_THLD_FANSPD_2ND,
-					   thld + 1000);
-			if (ret)
-				return -EINVAL;
-		} else {
-			dev_err(dev,
-				"please specify lower value than threashold2\n");
-			return -EINVAL;
-		}
-	}
-
-	ret = r8c_thld_set(h, index, thld);
+	ret = r8c_thld_set(h, index, val * 1000);
 
 	return ret ? ret : len;
 }
 
+/* low->middle or low->high */
 static SENSOR_DEVICE_ATTR_RW(fan1_temp_threshold1, fan1_temp_threshold, 1);
+/* middle->high */
+static SENSOR_DEVICE_ATTR_RW(fan1_temp_threshold2, fan1_temp_threshold, 0);
 
-static const struct r8c_fan_mode fan_mode_list[] = {
-	[FAN_MOD_STOP] = {
-		.mode_id = FAN_MOD_STOP,
-		.name    = "stop",
-		.models  = BIT(ID_HDL_A) | BIT(ID_HDL2_A),
-	},
-	[FAN_MOD_LOW]  = {
-		.mode_id = FAN_MOD_LOW,
-		.name    = "low",
-		.models  = BIT(ID_HDL2_A),
-	},
-	[FAN_MOD_MID]  = {
-		.mode_id = FAN_MOD_MID,
-		.name    = "middle",
-		.models  = BIT(ID_HDL_A),
-	},
-	[FAN_MOD_HIGH] = {
-		.mode_id = FAN_MOD_HIGH,
-		.name    = "high",
-		.models  = BIT(ID_HDL2_A),
-	},
-	[FAN_MOD_AUTO] = {
-		.mode_id = FAN_MOD_AUTO,
-		.name    = "auto",
-		.models  = BIT(ID_HDL_A) | BIT(ID_HDL2_A),
-	},
-};
-
-static ssize_t fan1_avail_modes_show(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct r8c_hwmon *h = dev_get_drvdata(dev);
-	ssize_t totlen = 0;
-	int i;
-
-	for (i = 0; i < FAN_MOD_MAX; i++) {
-		if (BIT(h->model->model_id) & fan_mode_list[i].models)
-			totlen += scnprintf(buf + totlen, 8, "%s ",
-					    fan_mode_list[i].name);
-	}
-
-	buf[totlen] = '\n';
-	totlen++;
-
-	return totlen;
-}
-
-static DEVICE_ATTR_RO(fan1_avail_modes);
-
-static ssize_t fan1_mode_show(struct device *dev,
-			     struct device_attribute *attr,
-			     char *buf)
-{
-	struct r8c_hwmon *h = dev_get_drvdata(dev);
-	ssize_t totlen = 0;
-	char retbuf[4];
-	const char *mode_str;
-	u32 mode;
-	int ret, i;
-
-	ret = landisk_r8c_exec_cmd(h->r8c, CMD_FANCTL, NULL, retbuf, 4);
-	if (ret <= 0)
-		return 0;
-
-	ret = kstrtou32(retbuf, 16, &mode);
-	if (ret) {
-		dev_err(dev, "failed to parse \"%s\" (%d)\n",
-			retbuf, ret);
-		return 0;
-	}
-
-	totlen += scnprintf(buf, 8, "%s-",
-			    FIELD_GET(R8C_FANCTL_MAN_MASK, mode) ?
-				"manual" : "auto");
-
-	for (i = 0; i < h->model->fan_spd_num + 1; i++) {
-		u8 fan_spd = h->model->fan_spds[i];
-
-		if (FIELD_GET(R8C_FANCTL_SPD_MASK, mode)
-		      == FIELD_GET(R8C_FANCTL_SPD_MASK, fan_spd))
-			mode_str = fan_mode_list[
-					FIELD_GET(R8C_FANCTL_MOD_MASK,
-						  fan_spd)].name;
-	}
-
-	if (!mode_str) {
-		dev_err(dev, "unknown fan mode: %02x", mode);
-		return 0;
-	}
-
-	totlen += scnprintf(buf + totlen, 8, "%s\n", mode_str);
-
-	return totlen;
-}
-
-static ssize_t fan1_mode_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t len)
-{
-	struct r8c_hwmon *h = dev_get_drvdata(dev);
-	ssize_t ret;
-	u8 mode_id = FAN_MOD_INVL, spd = 15;
-	char cmdbuf[4];
-	int i;
-
-	for (i = 0; i < FAN_MOD_MAX; i++) {
-		const struct r8c_fan_mode *mode = &fan_mode_list[i];
-
-		if (BIT(h->model->model_id) & mode->models &&
-		    !strncmp(buf, mode->name, strlen(mode->name)))
-			mode_id = mode->mode_id;
-	}
-
-	if (mode_id == FAN_MOD_INVL)
-		return -EINVAL;
-
-	for (i = 0; i < h->model->fan_spd_num + 1; i++) {
-		u8 _spd = h->model->fan_spds[i];
-
-		if (FIELD_GET(R8C_FANCTL_MOD_MASK, _spd) != mode_id)
-			continue;
-
-		spd = FIELD_GET(R8C_FANCTL_SPD_MASK, _spd);
-	}
-
-	/* 15 is invalid */
-	if (spd == 15)
-		return -EINVAL;
-
-	memset(cmdbuf, 0, 4);
-	cmdbuf[0] = spd + 0x30;
-
-	ret = landisk_r8c_exec_cmd(h->r8c, CMD_FANCTL, cmdbuf, NULL, 0);
-
-	return ret < 0 ? ret : len;
-}
-
-static DEVICE_ATTR_RW(fan1_mode);
-
-static struct attribute *r8c_hwmon_common_attrs[] = {
-	&dev_attr_fan1_avail_modes.attr,
-	&dev_attr_fan1_mode.attr,
-	NULL
-};
-
-static struct attribute *r8c_hwmon_thld1_attrs[] = {
+static struct attribute *r8c_hwmon_thld_attrs[] = {
 	&sensor_dev_attr_fan1_temp_threshold1.dev_attr.attr,
+	&sensor_dev_attr_fan1_temp_threshold2.dev_attr.attr,
 	NULL,
 };
 
-/*
- * Note: HDL-XR and HDL-XV have 4x (stop/low/mid/high) and
- *       threshold2 is required
- */
+/* switch visibility by fan_spd_num of landisk model */
+static umode_t r8c_hwmon_thld_visible(struct kobject *kobj,
+				      struct attribute *attr, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct r8c_hwmon *h = dev_get_drvdata(dev);
 
-static const struct attribute_group r8c_hwmon_common_group = {
-	.attrs = r8c_hwmon_common_attrs,
+	switch (h->model->fan_spd_num) {
+	case 4:
+		return 0644;
+	case 3:
+		if (attr == &sensor_dev_attr_fan1_temp_threshold1.dev_attr.attr)
+			return 0644;
+		fallthrough;
+	case 2:
+	default:
+		return 0000;
+	}
+}
+
+static const struct attribute_group r8c_hwmon_thld_group = {
+	.attrs = r8c_hwmon_thld_attrs,
+	.is_visible = r8c_hwmon_thld_visible,
 };
 
-static const struct attribute_group r8c_hwmon_spd_temp1_group = {
-	.attrs = r8c_hwmon_thld1_attrs,
-};
-
-static const struct attribute_group *r8c_hwmon_hdl_a_groups[] = {
-	&r8c_hwmon_common_group,
-	NULL,
-};
-
-static const struct attribute_group *r8c_hwmon_hdl2_a_groups[] = {
-	&r8c_hwmon_common_group,
-	&r8c_hwmon_spd_temp1_group,
+static const struct attribute_group *r8c_hwmon_thld_groups[] = {
+	&r8c_hwmon_thld_group,
 	NULL,
 };
 
@@ -482,7 +479,8 @@ static int r8c_hwmon_event(struct notifier_block *nb,
 			return NOTIFY_STOP;
 
 		pr_err("(current: %ld, threshold: %u)\n",
-		       temp, FIELD_GET(0xff, thld));
+		       temp / 1000,
+		       FIELD_GET(TH_IDX_MASK(R8C_THLD_TEMP_CRIT), thld));
 
 		return NOTIFY_STOP;
 	}
@@ -492,12 +490,14 @@ static int r8c_hwmon_event(struct notifier_block *nb,
 
 static const struct hwmon_channel_info *r8c_hwmon_info[] = {
 	HWMON_CHANNEL_INFO(temp, HWMON_T_INPUT | HWMON_T_CRIT),
+	HWMON_CHANNEL_INFO(fan,  HWMON_F_ENABLE | HWMON_F_LABEL | HWMON_F_TARGET),
 	NULL
 };
 
 static const struct hwmon_ops r8c_hwmon_ops = {
 	.is_visible = r8c_hwmon_is_visible,
 	.read = r8c_hwmon_read,
+	.read_string = r8c_hwmon_read_string,
 	.write = r8c_hwmon_write,
 };
 
@@ -506,26 +506,30 @@ static const struct hwmon_chip_info r8c_hwmon_chip_info = {
 	.info = r8c_hwmon_info,
 };
 
+static const char *fan_mode_list[] = {
+	[FAN_MOD_STOP] = "stop",
+	[FAN_MOD_LOW]  = "low",
+	[FAN_MOD_MID]  = "middle",
+	[FAN_MOD_HIGH] = "high",
+	[FAN_MOD_AUTO] = "auto",
+};
+
 static const struct landisk_model_info model_list[] = {
 	{
 		.model_id    = ID_HDL_A,
-		.attr_grp    = r8c_hwmon_hdl_a_groups,
 		.fan_spd_num = 2,
-		.fan_spds    = (u8 []){
-			FANCTL_MOD(FAN_MOD_AUTO) | 0,
-			FANCTL_MOD(FAN_MOD_STOP) | 1,
-			FANCTL_MOD(FAN_MOD_MID)  | 2,
+		.fan_spds   = (u8 []){
+			R8C_FANMAP(FAN_MOD_STOP, 1),
+			R8C_FANMAP(FAN_MOD_MID,  2),
 		},
 	},
 	{
 		.model_id    = ID_HDL2_A,
-		.attr_grp    = r8c_hwmon_hdl2_a_groups,
 		.fan_spd_num = 3,
-		.fan_spds    = (u8 []){
-			FANCTL_MOD(FAN_MOD_AUTO) | 0,
-			FANCTL_MOD(FAN_MOD_LOW)  | 1,
-			FANCTL_MOD(FAN_MOD_HIGH) | 2,
-			FANCTL_MOD(FAN_MOD_STOP) | 3,
+		.fan_spds   = (u8 []){
+			R8C_FANMAP(FAN_MOD_STOP, 3),
+			R8C_FANMAP(FAN_MOD_LOW,  1),
+			R8C_FANMAP(FAN_MOD_HIGH, 2),
 		},
 	},
 };
@@ -537,7 +541,7 @@ static int landisk_r8c_hwmon_probe(struct platform_device *pdev)
 	struct r8c_mcu *r8c = dev_get_drvdata(dev->parent);
 	struct r8c_hwmon *h;
 	u32 model_id = *(u32 *)dev_get_platdata(dev);
-	int i, ret;
+	int i, ret, spd;
 
 	pr_info("R8C hwmon driver\n");
 
@@ -561,6 +565,21 @@ static int landisk_r8c_hwmon_probe(struct platform_device *pdev)
 
 	dev_set_drvdata(dev, h);
 
+	/* setup fan_label */
+	ret = scnprintf(h->fan_label, R8C_FANLABEL_MAX, R8C_FANLABEL " (");
+	for (i = 0; i < h->model->fan_spd_num; i++) {
+		spd = FIELD_GET(R8C_FANMAP_ST_MASK, h->model->fan_spds[i]);
+		if (i > 0)
+			ret += scnprintf(h->fan_label + ret,
+					 R8C_FANLABEL_MAX - ret,
+					 ", ");
+		ret += scnprintf(h->fan_label + ret,
+				 R8C_FANLABEL_MAX - ret,
+				 "%d:%s",
+				 i, fan_mode_list[spd]);
+	}
+	scnprintf(h->fan_label + ret, 44 - ret, ")");
+
 	h->r8c = r8c;
 	h->nb.notifier_call = r8c_hwmon_event;
 	h->nb.priority = 120;
@@ -569,10 +588,10 @@ static int landisk_r8c_hwmon_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	hwmon = devm_hwmon_device_register_with_info(dev, dev_name(dev),
+	hwmon = devm_hwmon_device_register_with_info(dev, "landisk_r8c_hwmon",
 						     h,
 						     &r8c_hwmon_chip_info,
-						     h->model->attr_grp);
+						     r8c_hwmon_thld_groups);
 
 	if (IS_ERR(hwmon))
 		return PTR_ERR(hwmon);
