@@ -5,10 +5,11 @@
 #include <linux/bits.h>
 #include <linux/notifier.h>
 
-enum id {
+enum landisk_id {
 	ID_HDL_A = 0,
 	ID_HDL2_A,
-	ID_HDL_MAX = ID_HDL2_A,
+	ID_HDL_XR,
+	ID_HDL_MAX = ID_HDL_XR,
 };
 
 struct r8c_mcu;
