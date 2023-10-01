@@ -33,6 +33,7 @@ struct r8c_mcu {
 
 	char ev_code;
 	char buf[32];
+	int cur_ofs;
 
 	struct delayed_work ev_work;
 	struct blocking_notifier_head ev_list;
@@ -175,7 +176,7 @@ static int landisk_r8c_receive_buf(struct tty_port *port, const unsigned char *c
 				   const unsigned char *fp, size_t count)
 {
 	struct r8c_mcu *r8c = port->client_data;
-	int ret;
+	char *lf;
 
 //	pr_info("RECEIVE: \"%s\"\n", cp);
 //	pr_info("COUNT: %u\n", count);
@@ -185,17 +186,30 @@ static int landisk_r8c_receive_buf(struct tty_port *port, const unsigned char *c
 		pr_debug("ev code: %c\n", cp[1]);
 		r8c->ev_code = cp[1];
 		mod_delayed_work(system_wq, &r8c->ev_work, 0);
-		break;
+		return count;
 	case R8C_MSG_TYPE_REPL:
-		char *lf;
-		ret = scnprintf(r8c->buf, 32, "%s", cp + 1);
-		lf = strchr(r8c->buf, '\n');
-		if (lf)
-			lf[0] = '\0';
-//		pr_info("buf: \"%s\"\n", r8c->buf);
-		complete(&r8c->rpl_recv);
+		r8c->cur_ofs = scnprintf(r8c->buf, 32, "%s", cp + 1);
+		break;
+	default:
+		/* return when not waiting */
+		if (!r8c->cur_ofs)
+			return count;
+		r8c->cur_ofs += scnprintf(r8c->buf + r8c->cur_ofs,
+					  32 - r8c->cur_ofs,
+					  "%s", cp);
 		break;
 	}
+
+//	pr_info("buf: \"%s\"\n", r8c->buf);
+	lf = strchr(r8c->buf, '\n');
+	/* wait remaining data if no '\n' */
+	if (!lf)
+		return count;
+
+	lf[0] = '\0';
+	pr_debug("buf: \"%s\"\n", r8c->buf);
+	r8c->cur_ofs = 0;
+	complete(&r8c->rpl_recv);
 
 	return count;
 }
@@ -236,7 +250,7 @@ static int landisk_r8c_detect(struct r8c_mcu *r8c)
 		if (!strncmp(model, landisk_r8c_models[i],
 			     strlen(landisk_r8c_models[i]))) {
 			r8c->id = i;
-			pr_info("MCU: %s v%s\n", landisk_r8c_models[i], ver);
+			pr_info("MCU: %s v%s\n", model, ver);
 			return 0;
 		}
 	}
