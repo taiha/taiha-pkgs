@@ -12,37 +12,76 @@
 
 #define R8C_KEYS		2
 
-#define R8C_POWER		'P'
-#define R8C_RESET		'R'
+#define R8C_EV_POWER		'P'
+#define R8C_EV_RESET		'R'
+#define R8C_EV_FUNC		'C'
+#define R8C_EV_HDD1		'W'
+#define R8C_EV_HDD2		'X'
+#define R8C_EV_HDD3		'Y'
+#define R8C_EV_HDD4		'Z'
 
 struct r8c_key_device {
+	char *name;
 	char evcode;
 	unsigned int lkcode;
-	char *name;
+	unsigned short models;
 };
 
 struct r8c_keys {
+	struct input_dev *idev;
 	struct notifier_block nb;
+	u32 id;
 	char last_code;
-	struct input_dev *keys[R8C_KEYS];
 };
 
 /*
  * - power -> Power ON or Power Off
  * - reset -> System Reset
- *
- * Note: HDL-XR/XV series also has "FUNC" key (evcode='c'/'C')
+ * - func  -> Function
+ * - hddN  -> HDD Detection
  */
-static const struct r8c_key_device key_list[] = {
+static const struct r8c_key_device r8c_key_list[] = {
 	{
-		.evcode = R8C_POWER,
+		.name   = "power",
+		.evcode = R8C_EV_POWER,
 		.lkcode = KEY_POWER,
-		.name = "power",
+		.models = BIT(ID_HDL_A) | BIT(ID_HDL2_A) | BIT(ID_HDL_XR),
 	},
 	{
-		.evcode = R8C_RESET,
+		.name   = "reset",
+		.evcode = R8C_EV_RESET,
 		.lkcode = KEY_RESTART,
-		.name = "reset",
+		.models = BIT(ID_HDL_A) | BIT(ID_HDL2_A) | BIT(ID_HDL_XR),
+	},
+	{
+		.name   = "func",
+		.evcode = R8C_EV_FUNC,
+		.lkcode = BTN_0,
+		.models = BIT(ID_HDL_XR),
+	},
+	{
+		.name   = "hdd1",
+		.evcode = R8C_EV_HDD1,
+		.lkcode = BTN_1,
+		.models = BIT(ID_HDL_XR),
+	},
+	{
+		.name   = "hdd2",
+		.evcode = R8C_EV_HDD2,
+		.lkcode = BTN_2,
+		.models = BIT(ID_HDL_XR),
+	},
+	{
+		.name   = "hdd3",
+		.evcode = R8C_EV_HDD3,
+		.lkcode = BTN_3,
+		.models = BIT(ID_HDL_XR),
+	},
+	{
+		.name   = "hdd4",
+		.evcode = R8C_EV_HDD4,
+		.lkcode = BTN_4,
+		.models = BIT(ID_HDL_XR),
 	},
 };
 
@@ -50,13 +89,15 @@ static int r8c_key_event(struct notifier_block *nb,
 			 unsigned long evcode, void *data)
 {
 	struct r8c_keys *k = container_of(nb, struct r8c_keys, nb);
-	struct input_dev *idev;
+	const struct r8c_key_device *kdev;
 	char code = (char)evcode;
 	int i;
 	bool is_lower = code >= 'a' ? true : false;
 
-	for (i = 0; i < R8C_KEYS; i++) {
-		if (code != key_list[i].evcode + (is_lower ? 0x20 : 0x0))
+	for (i = 0; i < ARRAY_SIZE(r8c_key_list); i++) {
+		kdev = &r8c_key_list[i];
+
+		if (code != kdev->evcode + (is_lower ? 0x20 : 0x0))
 			continue;
 
 		/*
@@ -73,17 +114,15 @@ static int r8c_key_event(struct notifier_block *nb,
 			return NOTIFY_STOP;
 		k->last_code = code;
 
-		idev = k->keys[i];
-
 		/*
 		 * lower: released
 		 * upper: pressed
 		 */
-		input_report_key(idev, key_list[i].lkcode, is_lower ? 0 : 1);
-		input_sync(idev);
+		input_report_key(k->idev, kdev->lkcode, is_lower ? 0 : 1);
+		input_sync(k->idev);
 
-		dev_dbg(&idev->dev, "%s %s\n",
-			idev->name, is_lower ? "released" : "pressed");
+		dev_dbg(&k->idev->dev, "%s %s\n",
+			kdev->name, is_lower ? "released" : "pressed");
 
 		return NOTIFY_STOP;
 	}
@@ -96,6 +135,8 @@ static int landisk_r8c_keys_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct r8c_keys *k;
 	struct input_dev *idev;
+	unsigned short *keymap;
+	u32 id = *(u32 *)dev_get_platdata(dev);
 	int i, ret;
 
 	pr_info("R8C key driver\n");
@@ -104,26 +145,50 @@ static int landisk_r8c_keys_probe(struct platform_device *pdev)
 	if (!k)
 		return -ENOMEM;
 
-	for (i = 0; i < R8C_KEYS; i++) {
-		idev = devm_input_allocate_device(dev);
-		if (!idev)
-			return -ENOMEM;
+	keymap = devm_kcalloc(dev, ARRAY_SIZE(r8c_key_list),
+			      sizeof(r8c_key_list[0].lkcode), GFP_KERNEL);
+	if (!keymap)
+		return -ENOMEM;
 
-		idev->name = key_list[i].name;
-		input_set_capability(idev, EV_KEY, key_list[i].lkcode);
+	idev = devm_input_allocate_device(dev);
+	if (!idev)
+		return -ENOMEM;
 
-		ret = input_register_device(idev);
-		if (ret)
-			return ret;
+	platform_set_drvdata(pdev, k);
+	input_set_drvdata(idev, k);
 
-		k->keys[i] = idev;
+	for (i = 0; i < ARRAY_SIZE(r8c_key_list); i++) {
+		/* skip unsupported button */
+		if (!(r8c_key_list[i].models & BIT(id)))
+			continue;
+		keymap[i] = r8c_key_list[i].lkcode;
+		input_set_capability(idev, EV_KEY, keymap[i]);
+		dev_dbg(dev, "setup \"%s\" button\n", r8c_key_list[i].name);
 	}
 
+	idev->name = pdev->name;
+	idev->phys = "landisk-r8c-keys/input0";
+	idev->dev.parent = dev;
+	idev->id.bustype = BUS_HOST;
+	idev->id.vendor = 0x0001;
+	idev->id.product = 0x0001;
+	idev->id.version = 0x0001;
+
+	idev->keycode = keymap;
+	idev->keycodesize = sizeof(r8c_key_list[0].lkcode);
+	idev->keycodemax = ARRAY_SIZE(r8c_key_list);
+
+	k->idev = idev;
+	k->id = id;
 	k->last_code = 0x0;
 	k->nb.notifier_call = r8c_key_event;
 	k->nb.priority = 128;
 
-	return devm_landisk_r8c_register_event_notifier(dev, &k->nb);
+	ret = devm_landisk_r8c_register_event_notifier(dev, &k->nb);
+	if (ret)
+		return ret;
+
+	return input_register_device(idev);
 }
 
 static const struct of_device_id landisk_r8c_keys_ids[] = {
