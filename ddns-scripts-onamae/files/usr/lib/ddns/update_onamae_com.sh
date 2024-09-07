@@ -12,7 +12,7 @@
 #   https://www.harada-its.com/2019/06/01-421/
 
 # check requirements
-if type openssl &> /dev/null; then
+if ! type openssl &> /dev/null; then
 	write_log 3 "Performing update for onamae.com requires openssl (package: openssl-util). Please install"
 	return 127
 fi
