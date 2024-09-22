@@ -104,7 +104,7 @@ static void print_image_info(struct fortigate_fwinfo *fwinfo, int index)
 	struct part_map *kern, *root, *part;
 	char *name, buf[FWINFO_IMGNAME_LEN + 1];
 
-	if (index == 1) {
+	if (index == 0) {
 		name = fwinfo->image1_name;
 		kern = &fwinfo->image1_kernel;
 		root = &fwinfo->image1_rootfs;
@@ -126,7 +126,7 @@ static void print_image_info(struct fortigate_fwinfo *fwinfo, int index)
 	       "\tkernel: 0x%08x@0x%08x\n"
 	       "\trootfs: 0x%08x@0x%08x\n"
 	       "\tdata  : 0x%08x@0x%08x\n\n",
-	       fwinfo->active_image == index - 1 ? '*' : ' ', index, buf,
+	       fwinfo->active_image == index ? '*' : ' ', index, buf,
 	       BL2BY(kern->len), BL2BY(kern->ofs),
 	       BL2BY(root->len), BL2BY(root->ofs),
 	       BL2BY(part->len), BL2BY(part->ofs));
@@ -157,7 +157,7 @@ static int fortigate_fwinfo_write(struct fortigate_fwinfo *fwinfo,
 	char *_name;
 	int i, ret;
 
-	if (index == 1) {
+	if (index == 0) {
 		_name = fwinfo->image1_name;
 		_maps[0] = &fwinfo->image1_kernel;
 		_maps[1] = &fwinfo->image1_rootfs;
@@ -178,10 +178,10 @@ static int fortigate_fwinfo_write(struct fortigate_fwinfo *fwinfo,
 			_maps[i]->ofs = maps[i]->ofs;
 	}
 	if (active) {
-		fwinfo->active_image = index - 1;
+		fwinfo->active_image = index;
 
 		/* set active flags for part1/part2 */
-		if (index == 1) {
+		if (index == 0) {
 			fwinfo->part1_flags |= FWINFO_PARTN_ACTIVE;
 			fwinfo->part2_flags &= ~FWINFO_PARTN_ACTIVE;
 		} else {
@@ -238,7 +238,7 @@ static void print_usage(char *program)
 {
 	printf("Usage: %s <mtd-device> [options]\n\n", program);
 	printf("Options:\n\n"
-	       "  -i <index>\t\tset image <index> for operation (1/2)\n"
+	       "  -i <index>\t\tset image <index> for operation (0/1)\n"
 	       "  -a\t\t\tmark the specified image as active\n"
 	       "  -n <name>\t\tset <name> to the specified image\n"
 	       "  -k <size>[@<offset>]\tset <size> (and <offset>) of kernel to the specified image\n"
@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 		case 'i':
 			errno = 0;
 			i = strtol(optarg, NULL, 10);
-			if (errno || (i != 1 && i != 2)) {
+			if (errno || (i != 0 && i != 1)) {
 				printf("invalid image index specified!\n");
 				fortigate_fwinfo_mtd_close(&mtd);
 				return errno ? errno : -EINVAL;
