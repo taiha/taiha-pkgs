@@ -244,8 +244,9 @@ int ts_miconv2_write_unsigned(struct miconv2 *micon, u8 cmd, u32 val, int vlen)
 }
 EXPORT_SYMBOL_GPL(ts_miconv2_write_unsigned);
 
-static int ts_miconv2_receive_buf(struct tty_port *port, const unsigned char *cp,
-				  const unsigned char *fp, size_t count)
+static size_t ts_miconv2_receive_buf(struct tty_port *port,
+				     const unsigned char *cp,
+				     const unsigned char *fp, size_t count)
 {
 	struct miconv2 *micon = port->client_data;
 
