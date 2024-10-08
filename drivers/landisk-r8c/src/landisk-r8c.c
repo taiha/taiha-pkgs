@@ -172,8 +172,9 @@ static ssize_t command_store(struct device *dev,
 
 static DEVICE_ATTR_WO(command);
 
-static int landisk_r8c_receive_buf(struct tty_port *port, const unsigned char *cp,
-				   const unsigned char *fp, size_t count)
+static size_t landisk_r8c_receive_buf(struct tty_port *port,
+				      const unsigned char *cp,
+				      const unsigned char *fp, size_t count)
 {
 	struct r8c_mcu *r8c = port->client_data;
 	char *lf;
